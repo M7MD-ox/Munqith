@@ -1,0 +1,19 @@
+# Visual Studio / .NET
+bin/
+obj/
+publish/
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# Operating System
+Thumbs.db
+ehthru.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
