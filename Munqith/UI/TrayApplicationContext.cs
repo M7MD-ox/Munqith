@@ -13,6 +13,7 @@ namespace Munqith.UI
         private readonly ConversionService _conversionService;
         private GlobalHotkeyManager? _hotkeyManager;
         private HotkeyListenerForm? _hotkeyForm;
+        private SettingsForm? _openSettingsForm;
 
         public TrayApplicationContext()
         {
@@ -23,14 +24,36 @@ namespace Munqith.UI
 
             _trayIcon = new NotifyIcon
             {
-                Icon = CreateAppIcon(),
+                Icon = LoadAppIcon(),
                 Text = "مُنقِذ Munqith",
                 Visible = true,
                 ContextMenuStrip = CreateContextMenu()
             };
+
+            // Fix Tray Icon Clicks for Windows
+            _trayIcon.MouseClick += TrayIcon_MouseClick;
             _trayIcon.DoubleClick += (s, e) => ShowSettings();
 
             SetupHotkeys();
+        }
+
+        private void TrayIcon_MouseClick(object? sender, MouseEventArgs e)
+        {
+            // If left click, pop up context menu at mouse location or show settings
+            if (e.Button == MouseButtons.Left)
+            {
+                // Display context menu directly at cursor position on left click
+                var method = typeof(NotifyIcon).GetMethod("ShowContextMenu", 
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                if (method != null)
+                {
+                    method.Invoke(_trayIcon, null);
+                }
+                else
+                {
+                    ShowSettings();
+                }
+            }
         }
 
         private void SetupHotkeys()
@@ -52,7 +75,7 @@ namespace Munqith.UI
                     _hotkeyManager?.RegisterHotkey(
                         (uint)binding.ModifierKeysValue,
                         (uint)binding.KeyValue,
-                        () => { }); // Action handled via WM_HOTKEY
+                        () => { });
                 }
             }
         }
@@ -62,20 +85,23 @@ namespace Munqith.UI
             await _conversionService.PerformConversion();
         }
 
-        private ContextMenuStrip CreateContextMenu()
+        public ContextMenuStrip CreateContextMenu()
         {
             var menu = new ContextMenuStrip();
             var isArabic = _settingsService.Settings.Language == "ar";
             menu.RightToLeft = isArabic ? RightToLeft.Yes : RightToLeft.No;
+            menu.Font = new Font("Segoe UI", 9.5f);
 
-            var settingsItem = new ToolStripMenuItem(isArabic ? "⚙️ الإعدادات" : "⚙️ Settings");
+            var settingsItem = new ToolStripMenuItem(isArabic ? "⚙️  الإعدادات" : "⚙️  Settings");
+            settingsItem.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             settingsItem.Click += (s, e) => ShowSettings();
             menu.Items.Add(settingsItem);
+            
             menu.Items.Add(new ToolStripSeparator());
 
             var toggleText = _settingsService.Settings.IsEnabled
-                ? (isArabic ? "⏸️ إيقاف مؤقت" : "⏸️ Pause")
-                : (isArabic ? "▶️ تشغيل" : "▶️ Resume");
+                ? (isArabic ? "⏸️  إيقاف مؤقت" : "⏸️  Pause")
+                : (isArabic ? "▶️  تشغيل" : "▶️  Resume");
             var toggleItem = new ToolStripMenuItem(toggleText);
             toggleItem.Click += (s, e) =>
             {
@@ -84,22 +110,35 @@ namespace Munqith.UI
                 _trayIcon.ContextMenuStrip = CreateContextMenu();
             };
             menu.Items.Add(toggleItem);
+            
             menu.Items.Add(new ToolStripSeparator());
 
-            var aboutItem = new ToolStripMenuItem(isArabic ? "ℹ️ عن البرنامج" : "ℹ️ About");
+            var aboutItem = new ToolStripMenuItem(isArabic ? "ℹ️  عن البرنامج" : "ℹ️  About");
             aboutItem.Click += (s, e) => ShowAbout();
             menu.Items.Add(aboutItem);
+            
             menu.Items.Add(new ToolStripSeparator());
 
-            var exitItem = new ToolStripMenuItem(isArabic ? "❌ خروج" : "❌ Exit");
+            var exitItem = new ToolStripMenuItem(isArabic ? "❌  خروج" : "❌  Exit");
             exitItem.Click += (s, e) => ExitApp();
             menu.Items.Add(exitItem);
 
             return menu;
         }
 
-        private Icon CreateAppIcon()
+        private Icon LoadAppIcon()
         {
+            try
+            {
+                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "app.ico");
+                if (File.Exists(iconPath))
+                {
+                    return new Icon(iconPath);
+                }
+            }
+            catch { }
+
+            // Fallback generated icon if file is missing
             var bitmap = new Bitmap(32, 32);
             using (var g = Graphics.FromImage(bitmap))
             {
@@ -115,17 +154,37 @@ namespace Munqith.UI
             return Icon.FromHandle(bitmap.GetHicon());
         }
 
-        private void ShowSettings()
+        public void ShowSettings()
         {
-            var form = new SettingsForm(_settingsService, _statsService, this);
-            form.ShowDialog();
-            RegisterConfiguredHotkeys();
-            _trayIcon.ContextMenuStrip = CreateContextMenu();
+            if (_openSettingsForm != null && !_openSettingsForm.IsDisposed)
+            {
+                if (_openSettingsForm.WindowState == FormWindowState.Minimized)
+                    _openSettingsForm.WindowState = FormWindowState.Normal;
+                _openSettingsForm.BringToFront();
+                _openSettingsForm.Activate();
+                NativeMethods.SetForegroundWindow(_openSettingsForm.Handle);
+                return;
+            }
+
+            _openSettingsForm = new SettingsForm(_settingsService, _statsService, this);
+            _openSettingsForm.Icon = LoadAppIcon();
+            _openSettingsForm.FormClosed += (s, e) =>
+            {
+                _openSettingsForm = null;
+                RegisterConfiguredHotkeys();
+                _trayIcon.ContextMenuStrip = CreateContextMenu();
+            };
+
+            _openSettingsForm.Show();
+            _openSettingsForm.BringToFront();
+            _openSettingsForm.Activate();
+            NativeMethods.SetForegroundWindow(_openSettingsForm.Handle);
         }
 
         private void ShowAbout()
         {
             var form = new AboutForm(_settingsService.Settings.Language, _settingsService.Settings.DarkMode);
+            form.Icon = LoadAppIcon();
             form.ShowDialog();
         }
 
@@ -149,9 +208,6 @@ namespace Munqith.UI
         }
     }
 
-    /// <summary>
-    /// Hidden form to receive WM_HOTKEY messages from the OS.
-    /// </summary>
     internal class HotkeyListenerForm : Form
     {
         private GlobalHotkeyManager? _hotkeyManager;

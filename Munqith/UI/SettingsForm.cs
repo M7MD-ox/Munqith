@@ -9,39 +9,28 @@ namespace Munqith.UI
         private readonly SettingsService _settingsService;
         private readonly StatsService _statsService;
         private readonly TrayApplicationContext _trayContext;
-        private readonly bool _isDark;
-        private readonly bool _isArabic;
+        
+        private bool _isDark;
+        private bool _isArabic;
 
         // Theme colors
-        private readonly Color _bgColor;
-        private readonly Color _sectionColor;
-        private readonly Color _textColor;
-        private readonly Color _secondaryTextColor;
-        private readonly Color _accentColor = Color.FromArgb(0, 120, 212);
+        private Color _bgColor;
+        private Color _sectionColor;
+        private Color _textColor;
+        private Color _secondaryTextColor;
+        private Color _borderColor;
+        private readonly Color _accentColor = Color.FromArgb(0, 120, 212); // Windows 11 Blue
+
+        private Panel _mainPanel = null!;
 
         public SettingsForm(SettingsService settingsService, StatsService statsService, TrayApplicationContext trayContext)
         {
             _settingsService = settingsService;
             _statsService = statsService;
             _trayContext = trayContext;
+            
             _isDark = settingsService.Settings.DarkMode;
             _isArabic = settingsService.Settings.Language == "ar";
-
-            // Set theme colors
-            if (_isDark)
-            {
-                _bgColor = Color.FromArgb(30, 30, 30);
-                _sectionColor = Color.FromArgb(45, 45, 45);
-                _textColor = Color.FromArgb(224, 224, 224);
-                _secondaryTextColor = Color.FromArgb(160, 160, 160);
-            }
-            else
-            {
-                _bgColor = Color.White;
-                _sectionColor = Color.FromArgb(245, 245, 245);
-                _textColor = Color.FromArgb(26, 26, 26);
-                _secondaryTextColor = Color.FromArgb(100, 100, 100);
-            }
 
             InitializeForm();
             BuildUI();
@@ -50,19 +39,43 @@ namespace Munqith.UI
         private void InitializeForm()
         {
             this.Text = _isArabic ? "مُنقِذ — الإعدادات" : "Munqith — Settings";
-            this.Size = new Size(520, 720);
+            this.Size = new Size(530, 750);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.RightToLeft = _isArabic ? RightToLeft.Yes : RightToLeft.No;
             this.RightToLeftLayout = _isArabic;
-            this.Font = new Font("Segoe UI", 10);
+            this.Font = new Font("Segoe UI", 9.5f);
+            
+            UpdateThemeTokens();
             this.BackColor = _bgColor;
+        }
+
+        private void UpdateThemeTokens()
+        {
+            if (_isDark)
+            {
+                _bgColor = Color.FromArgb(32, 32, 32);           // Dark background
+                _sectionColor = Color.FromArgb(44, 44, 44);       // Dark card surface
+                _textColor = Color.FromArgb(243, 243, 243);       // Primary text
+                _secondaryTextColor = Color.FromArgb(160, 160, 160); // Secondary text
+                _borderColor = Color.FromArgb(58, 58, 58);       // Subtle border
+            }
+            else
+            {
+                _bgColor = Color.FromArgb(249, 249, 249);         // Light background
+                _sectionColor = Color.White;                       // White card surface
+                _textColor = Color.FromArgb(26, 26, 26);         // Primary text
+                _secondaryTextColor = Color.FromArgb(110, 110, 110); // Secondary text
+                _borderColor = Color.FromArgb(229, 229, 229);     // Light border
+            }
         }
 
         private void BuildUI()
         {
-            var mainPanel = new Panel
+            this.Controls.Clear();
+
+            _mainPanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
@@ -70,38 +83,47 @@ namespace Munqith.UI
                 BackColor = _bgColor
             };
 
-            int yPos = 10;
+            int yPos = 12;
 
-            // === HEADER ===
+            // === HEADER WITH LOGO / TITLE ===
+            var headerPanel = new Panel
+            {
+                Location = new Point(20, yPos),
+                Size = new Size(470, 50),
+                BackColor = Color.Transparent
+            };
+
             var headerLabel = new Label
             {
-                Text = _isArabic ? "مُنقِذ" : "Munqith",
-                Font = new Font("Segoe UI", 22, FontStyle.Bold),
+                Text = _isArabic ? "🛡️  مُنقِذ Munqith" : "🛡️  Munqith",
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
                 ForeColor = _accentColor,
                 AutoSize = true,
-                Location = new Point(20, yPos)
+                Location = new Point(0, 0)
             };
-            mainPanel.Controls.Add(headerLabel);
+            headerPanel.Controls.Add(headerLabel);
 
             var subtitleLabel = new Label
             {
-                Text = _isArabic ? "أداة تحويل تخطيط الكيبورد" : "Keyboard Layout Converter",
-                Font = new Font("Segoe UI", 9),
+                Text = _isArabic ? "أداة تصحيح لغة الكتابة في ويندوز" : "Windows Keyboard Layout Auto-Fixer",
+                Font = new Font("Segoe UI", 9f),
                 ForeColor = _secondaryTextColor,
                 AutoSize = true,
-                Location = new Point(22, yPos + 35)
+                Location = new Point(4, 30)
             };
-            mainPanel.Controls.Add(subtitleLabel);
-            yPos += 60;
+            headerPanel.Controls.Add(subtitleLabel);
 
-            // === STATS SECTION ===
-            var statsPanel = CreateSection(yPos, 130);
+            _mainPanel.Controls.Add(headerPanel);
+            yPos += 62;
+
+            // === STATS DASHBOARD ===
+            var statsPanel = CreateSection(yPos, 135);
             BuildStatsSection(statsPanel);
-            mainPanel.Controls.Add(statsPanel);
-            yPos += 145;
+            _mainPanel.Controls.Add(statsPanel);
+            yPos += 148;
 
             // === KEYBOARD LAYOUT ===
-            var layoutPanel = CreateSection(yPos, 60);
+            var layoutPanel = CreateSection(yPos, 62);
             AddComboSetting(layoutPanel,
                 _isArabic ? "تخطيط الكيبورد" : "Keyboard Layout",
                 new[] { "Windows Arabic PC", "Mac Arabic" },
@@ -111,13 +133,13 @@ namespace Munqith.UI
                     _settingsService.Settings.SelectedLayout = (KeyboardLayout)idx;
                     _settingsService.Save();
                 });
-            mainPanel.Controls.Add(layoutPanel);
-            yPos += 75;
+            _mainPanel.Controls.Add(layoutPanel);
+            yPos += 74;
 
             // === CONVERSION MODE ===
-            var modePanel = CreateSection(yPos, 60);
+            var modePanel = CreateSection(yPos, 62);
             var modeLabels = _isArabic
-                ? new[] { "النص المحدد", "كل النص", "آخر كلمة" }
+                ? new[] { "النص المحدد (Selected Text)", "كل النص (All Text)", "آخر كلمة (Last Word)" }
                 : new[] { "Selected Text", "All Text", "Last Word" };
             AddComboSetting(modePanel,
                 _isArabic ? "وضع التحويل" : "Conversion Mode",
@@ -128,13 +150,13 @@ namespace Munqith.UI
                     _settingsService.Settings.ConversionMode = (ConversionMode)idx;
                     _settingsService.Save();
                 });
-            mainPanel.Controls.Add(modePanel);
-            yPos += 75;
+            _mainPanel.Controls.Add(modePanel);
+            yPos += 74;
 
             // === SMART DETECTION ===
-            yPos = AddToggleSetting(mainPanel, yPos,
-                _isArabic ? "الكشف الذكي" : "Smart Detection",
-                _isArabic ? "يحافظ على الكلمات الإنجليزية الصحيحة" : "Preserves correctly typed English words",
+            yPos = AddToggleSetting(_mainPanel, yPos,
+                _isArabic ? "الكشف الذكي (Smart Detection)" : "Smart Detection",
+                _isArabic ? "تحويل الكلام الخطأ فقط والحفاظ على الكلمات الصحيحة" : "Preserves real English words and only converts typos",
                 _settingsService.Settings.SmartDetectionEnabled,
                 val =>
                 {
@@ -143,9 +165,9 @@ namespace Munqith.UI
                 });
 
             // === START WITH WINDOWS ===
-            yPos = AddToggleSetting(mainPanel, yPos,
-                _isArabic ? "بدء مع الويندوز" : "Start with Windows",
-                _isArabic ? "تشغيل تلقائي عند بدء الويندوز" : "Auto-start when Windows starts",
+            yPos = AddToggleSetting(_mainPanel, yPos,
+                _isArabic ? "بدء التشغيل مع الويندوز" : "Start with Windows",
+                _isArabic ? "تشغيل الأداة تلقائياً عند فتح الكمبيوتر" : "Auto-start when Windows launches",
                 _settingsService.Settings.StartWithWindows,
                 val =>
                 {
@@ -154,51 +176,52 @@ namespace Munqith.UI
                     _settingsService.Save();
                 });
 
-            // === DARK MODE ===
-            yPos = AddToggleSetting(mainPanel, yPos,
-                _isArabic ? "الوضع الليلي" : "Dark Mode",
-                "",
+            // === DARK MODE (LIVE TOGGLE!) ===
+            yPos = AddToggleSetting(_mainPanel, yPos,
+                _isArabic ? "الوضع الليلي (Dark Mode)" : "Dark Mode",
+                _isArabic ? "تغيير مظهر الشاشة فوراً" : "Toggle dark/light theme instantly",
                 _settingsService.Settings.DarkMode,
                 val =>
                 {
                     _settingsService.Settings.DarkMode = val;
                     _settingsService.Save();
-                    MessageBox.Show(
-                        _isArabic ? "سيتم تطبيق الوضع الليلي عند إعادة فتح الإعدادات"
-                                  : "Dark mode will apply when you reopen settings",
-                        _isArabic ? "ملاحظة" : "Note",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    _isDark = val;
+                    ApplyLiveTheme();
                 });
 
-            // === LANGUAGE ===
-            var langPanel = CreateSection(yPos, 60);
+            // === LANGUAGE (LIVE TOGGLE!) ===
+            var langPanel = CreateSection(yPos, 62);
             AddComboSetting(langPanel,
-                _isArabic ? "اللغة" : "Language",
+                _isArabic ? "لغة الواجهة (Language)" : "Interface Language",
                 new[] { "العربية", "English" },
                 _isArabic ? 0 : 1,
                 idx =>
                 {
-                    _settingsService.Settings.Language = idx == 0 ? "ar" : "en";
-                    _settingsService.Save();
-                    MessageBox.Show(
-                        idx == 0 ? "سيتم تطبيق اللغة عند إعادة فتح الإعدادات"
-                                 : "Language will apply when you reopen settings",
-                        idx == 0 ? "ملاحظة" : "Note",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    string newLang = idx == 0 ? "ar" : "en";
+                    if (_settingsService.Settings.Language != newLang)
+                    {
+                        _settingsService.Settings.Language = newLang;
+                        _settingsService.Save();
+                        _isArabic = newLang == "ar";
+                        this.RightToLeft = _isArabic ? RightToLeft.Yes : RightToLeft.No;
+                        this.RightToLeftLayout = _isArabic;
+                        this.Text = _isArabic ? "مُنقِذ — الإعدادات" : "Munqith — Settings";
+                        BuildUI(); // Rebuild UI layout for RTL/LTR
+                    }
                 });
-            mainPanel.Controls.Add(langPanel);
-            yPos += 75;
+            _mainPanel.Controls.Add(langPanel);
+            yPos += 74;
 
             // === HOTKEYS SECTION ===
-            var hotkeyPanel = CreateSection(yPos, 100);
+            var hotkeyPanel = CreateSection(yPos, 110);
             BuildHotkeysSection(hotkeyPanel);
-            mainPanel.Controls.Add(hotkeyPanel);
-            yPos += 115;
+            _mainPanel.Controls.Add(hotkeyPanel);
+            yPos += 122;
 
-            // === ENABLE/DISABLE ===
-            yPos = AddToggleSetting(mainPanel, yPos,
+            // === ENABLE/DISABLE TOOL ===
+            yPos = AddToggleSetting(_mainPanel, yPos,
                 _isArabic ? "تشغيل الأداة" : "Enable Tool",
-                _isArabic ? "تفعيل/تعطيل التحويل" : "Enable/disable conversion",
+                _isArabic ? "تفعيل أو تجميد تحويل الاختصارات" : "Enable/pause global hotkeys",
                 _settingsService.Settings.IsEnabled,
                 val =>
                 {
@@ -206,123 +229,139 @@ namespace Munqith.UI
                     _settingsService.Save();
                 });
 
-            this.Controls.Add(mainPanel);
+            this.Controls.Add(_mainPanel);
+        }
+
+        private void ApplyLiveTheme()
+        {
+            UpdateThemeTokens();
+            this.BackColor = _bgColor;
+            _mainPanel.BackColor = _bgColor;
+            BuildUI(); // Instant rebuild with new color tokens
         }
 
         private void BuildStatsSection(Panel panel)
         {
             var titleLabel = new Label
             {
-                Text = _isArabic ? "تم إنقاذك" : "You've been saved",
-                Font = new Font("Segoe UI", 9),
+                Text = _isArabic ? "تم إنقاذك بإجمالي" : "Rescue Stats Summary",
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
                 ForeColor = _secondaryTextColor,
                 AutoSize = true,
-                Location = new Point(15, 8)
+                Location = new Point(15, 10)
             };
             panel.Controls.Add(titleLabel);
 
-            // Big conversion count
             var countLabel = new Label
             {
-                Text = _statsService.TotalConversions.ToString(),
-                Font = new Font("Segoe UI", 32, FontStyle.Bold),
+                Text = _statsService.TotalConversions.ToString("N0"),
+                Font = new Font("Segoe UI", 30, FontStyle.Bold),
                 ForeColor = _accentColor,
                 AutoSize = true,
-                Location = new Point(15, 28)
+                Location = new Point(12, 28)
             };
             panel.Controls.Add(countLabel);
 
             var timesLabel = new Label
             {
-                Text = _isArabic ? "مرة" : "times",
-                Font = new Font("Segoe UI", 11),
+                Text = _isArabic ? "مرة حتى الآن!" : "times saved!",
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
                 ForeColor = _textColor,
                 AutoSize = true,
-                Location = new Point(countLabel.PreferredWidth + 20, 48)
+                Location = new Point(countLabel.PreferredWidth + 18, 46)
             };
             panel.Controls.Add(timesLabel);
 
-            // Stats cards row
-            int cardY = 85;
-            int cardWidth = 140;
-            int spacing = 15;
-            int startX = 15;
+            // Row of metric cards
+            int cardY = 82;
+            int cardWidth = 142;
+            int spacing = 10;
+            int startX = 12;
 
-            // Characters card
-            AddStatCard(panel, startX, cardY, cardWidth,
+            AddStatMiniCard(panel, startX, cardY, cardWidth,
                 _statsService.TotalCharacters.ToString("N0"),
-                _isArabic ? "حرف" : "characters");
+                _isArabic ? "حرف تم تحويله" : "Chars Converted");
 
-            // Words card
-            AddStatCard(panel, startX + cardWidth + spacing, cardY, cardWidth,
+            AddStatMiniCard(panel, startX + cardWidth + spacing, cardY, cardWidth,
                 _statsService.TotalWords.ToString("N0"),
-                _isArabic ? "كلمة" : "words");
+                _isArabic ? "كلمة مُنقَذة" : "Words Fixed");
 
-            // Time saved card
             var timeDisplay = _isArabic
                 ? _statsService.GetTimeSavedDisplayArabic()
                 : _statsService.GetTimeSavedDisplay();
-            AddStatCard(panel, startX + (cardWidth + spacing) * 2, cardY, cardWidth,
+
+            AddStatMiniCard(panel, startX + (cardWidth + spacing) * 2, cardY, cardWidth,
                 timeDisplay,
-                _isArabic ? "وقت مُوفَّر" : "time saved");
+                _isArabic ? "وقت مُوفَّر" : "Time Saved");
         }
 
-        private void AddStatCard(Panel parent, int x, int y, int width, string value, string label)
+        private void AddStatMiniCard(Panel parent, int x, int y, int width, string value, string label)
         {
-            var valueLabel = new Label
+            var card = new Panel
+            {
+                Location = new Point(x, y),
+                Size = new Size(width, 42),
+                BackColor = _isDark ? Color.FromArgb(52, 52, 52) : Color.FromArgb(242, 244, 247),
+                Padding = new Padding(6)
+            };
+
+            var valLbl = new Label
             {
                 Text = value,
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
                 ForeColor = _textColor,
                 AutoSize = true,
-                Location = new Point(x, y)
+                Location = new Point(6, 2)
             };
-            parent.Controls.Add(valueLabel);
+            card.Controls.Add(valLbl);
 
-            var descLabel = new Label
+            var descLbl = new Label
             {
                 Text = label,
-                Font = new Font("Segoe UI", 8),
+                Font = new Font("Segoe UI", 7.8f),
                 ForeColor = _secondaryTextColor,
                 AutoSize = true,
-                Location = new Point(x, y + 22)
+                Location = new Point(6, 22)
             };
-            parent.Controls.Add(descLabel);
+            card.Controls.Add(descLbl);
+
+            parent.Controls.Add(card);
         }
 
         private void BuildHotkeysSection(Panel panel)
         {
             var titleLabel = new Label
             {
-                Text = _isArabic ? "الاختصارات" : "Hotkeys",
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Text = _isArabic ? "اختصارات المفاتيح" : "Global Hotkeys",
+                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
                 ForeColor = _textColor,
                 AutoSize = true,
-                Location = new Point(15, 8)
+                Location = new Point(15, 10)
             };
             panel.Controls.Add(titleLabel);
 
-            int yOffset = 35;
+            int yOffset = 38;
             foreach (var hotkey in _settingsService.Settings.Hotkeys)
             {
-                var hotkeyLabel = new Label
+                var badgeLabel = new Label
                 {
-                    Text = hotkey.DisplayName,
-                    Font = new Font("Segoe UI", 10),
-                    ForeColor = _accentColor,
+                    Text = $"  {hotkey.DisplayName}  ",
+                    Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                    ForeColor = Color.White,
+                    BackColor = _accentColor,
                     AutoSize = true,
-                    Location = new Point(30, yOffset)
+                    Location = new Point(20, yOffset)
                 };
-                panel.Controls.Add(hotkeyLabel);
+                panel.Controls.Add(badgeLabel);
 
                 var enabledCheck = new CheckBox
                 {
                     Checked = hotkey.IsEnabled,
-                    Text = _isArabic ? "مفعّل" : "Enabled",
-                    Font = new Font("Segoe UI", 8.5f),
-                    ForeColor = _secondaryTextColor,
+                    Text = _isArabic ? "مفعّل" : "Active",
+                    Font = new Font("Segoe UI", 9f),
+                    ForeColor = _textColor,
                     AutoSize = true,
-                    Location = new Point(200, yOffset)
+                    Location = new Point(220, yOffset + 2)
                 };
                 var currentHotkey = hotkey;
                 enabledCheck.CheckedChanged += (s, e) =>
@@ -332,19 +371,27 @@ namespace Munqith.UI
                 };
                 panel.Controls.Add(enabledCheck);
 
-                yOffset += 28;
+                yOffset += 32;
             }
         }
 
         private Panel CreateSection(int y, int height)
         {
-            return new Panel
+            var panel = new Panel
             {
                 Location = new Point(20, y),
-                Size = new Size(460, height),
+                Size = new Size(470, height),
                 BackColor = _sectionColor,
                 Padding = new Padding(10)
             };
+
+            panel.Paint += (s, e) =>
+            {
+                using var pen = new Pen(_borderColor, 1);
+                e.Graphics.DrawRectangle(pen, 0, 0, panel.Width - 1, panel.Height - 1);
+            };
+
+            return panel;
         }
 
         private void AddComboSetting(Panel parent, string label, string[] items, int selected, Action<int> onChange)
@@ -352,7 +399,7 @@ namespace Munqith.UI
             var lbl = new Label
             {
                 Text = label,
-                Font = new Font("Segoe UI", 10),
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
                 ForeColor = _textColor,
                 AutoSize = true,
                 Location = new Point(15, 10)
@@ -363,10 +410,11 @@ namespace Munqith.UI
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9.5f),
-                Size = new Size(200, 30),
-                Location = new Point(15, 32),
-                BackColor = _isDark ? Color.FromArgb(60, 60, 60) : Color.White,
-                ForeColor = _textColor
+                Size = new Size(220, 30),
+                Location = new Point(15, 30),
+                BackColor = _isDark ? Color.FromArgb(55, 55, 55) : Color.White,
+                ForeColor = _textColor,
+                FlatStyle = FlatStyle.Flat
             };
             combo.Items.AddRange(items);
             if (selected >= 0 && selected < items.Length)
@@ -377,15 +425,16 @@ namespace Munqith.UI
 
         private int AddToggleSetting(Panel parent, int y, string title, string subtitle, bool isChecked, Action<bool> onChange)
         {
-            var section = CreateSection(y, string.IsNullOrEmpty(subtitle) ? 45 : 55);
+            int height = string.IsNullOrEmpty(subtitle) ? 48 : 58;
+            var section = CreateSection(y, height);
 
             var titleLabel = new Label
             {
                 Text = title,
-                Font = new Font("Segoe UI", 10),
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
                 ForeColor = _textColor,
                 AutoSize = true,
-                Location = new Point(15, string.IsNullOrEmpty(subtitle) ? 12 : 6)
+                Location = new Point(15, string.IsNullOrEmpty(subtitle) ? 14 : 8)
             };
             section.Controls.Add(titleLabel);
 
@@ -394,10 +443,10 @@ namespace Munqith.UI
                 var subLabel = new Label
                 {
                     Text = subtitle,
-                    Font = new Font("Segoe UI", 8),
+                    Font = new Font("Segoe UI", 8.3f),
                     ForeColor = _secondaryTextColor,
                     AutoSize = true,
-                    Location = new Point(15, 28)
+                    Location = new Point(15, 30)
                 };
                 section.Controls.Add(subLabel);
             }
@@ -406,13 +455,13 @@ namespace Munqith.UI
             {
                 Checked = isChecked,
                 AutoSize = true,
-                Location = new Point(420, string.IsNullOrEmpty(subtitle) ? 12 : 14)
+                Location = new Point(430, string.IsNullOrEmpty(subtitle) ? 14 : 16)
             };
             toggle.CheckedChanged += (s, e) => onChange(toggle.Checked);
             section.Controls.Add(toggle);
 
             parent.Controls.Add(section);
-            return y + section.Height + 10;
+            return y + height + 12;
         }
     }
 }
