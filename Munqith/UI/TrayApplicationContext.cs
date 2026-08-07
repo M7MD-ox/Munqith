@@ -11,8 +11,7 @@ namespace Munqith.UI
         private readonly SettingsService _settingsService;
         private readonly StatsService _statsService;
         private readonly ConversionService _conversionService;
-        private GlobalHotkeyManager? _hotkeyManager;
-        private HotkeyListenerForm? _hotkeyForm;
+        private readonly LowLevelKeyboardHook _keyboardHook;
         private SettingsForm? _openSettingsForm;
 
         public TrayApplicationContext()
@@ -30,19 +29,20 @@ namespace Munqith.UI
                 ContextMenuStrip = CreateContextMenu()
             };
 
-            // Fix Tray Icon Clicks for Windows
             _trayIcon.MouseClick += TrayIcon_MouseClick;
             _trayIcon.DoubleClick += (s, e) => ShowSettings();
 
-            SetupHotkeys();
+            // Initialize Low Level Keyboard Hook
+            _keyboardHook = new LowLevelKeyboardHook();
+            _keyboardHook.HotkeyTriggered += OnHotkeyTriggered;
+            RegisterConfiguredHotkeys();
+            _keyboardHook.Start();
         }
 
         private void TrayIcon_MouseClick(object? sender, MouseEventArgs e)
         {
-            // If left click, pop up context menu at mouse location or show settings
             if (e.Button == MouseButtons.Left)
             {
-                // Display context menu directly at cursor position on left click
                 var method = typeof(NotifyIcon).GetMethod("ShowContextMenu", 
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 if (method != null)
@@ -56,31 +56,12 @@ namespace Munqith.UI
             }
         }
 
-        private void SetupHotkeys()
-        {
-            _hotkeyForm = new HotkeyListenerForm();
-            _hotkeyManager = new GlobalHotkeyManager(_hotkeyForm.Handle);
-            _hotkeyForm.HotkeyPressed += OnHotkeyPressed;
-            _hotkeyForm.SetHotkeyManager(_hotkeyManager);
-            RegisterConfiguredHotkeys();
-        }
-
         public void RegisterConfiguredHotkeys()
         {
-            _hotkeyManager?.UnregisterAll();
-            foreach (var binding in _settingsService.Settings.Hotkeys)
-            {
-                if (binding.IsEnabled)
-                {
-                    _hotkeyManager?.RegisterHotkey(
-                        (uint)binding.ModifierKeysValue,
-                        (uint)binding.KeyValue,
-                        () => { });
-                }
-            }
+            _keyboardHook.UpdateBindings(_settingsService.Settings.Hotkeys);
         }
 
-        private async void OnHotkeyPressed(int hotkeyId)
+        private async void OnHotkeyTriggered(HotkeyBinding binding)
         {
             await _conversionService.PerformConversion();
         }
@@ -92,11 +73,11 @@ namespace Munqith.UI
             menu.RightToLeft = isArabic ? RightToLeft.Yes : RightToLeft.No;
             menu.Font = new Font("Segoe UI", 9.5f);
 
-            var settingsItem = new ToolStripMenuItem(isArabic ? "⚙️  الإعدادات" : "⚙️  Settings");
+            var settingsItem = new ToolStripMenuItem(isArabic ? "⚙️  الإعدادات والتحكم" : "⚙️  Settings & Dashboard");
             settingsItem.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             settingsItem.Click += (s, e) => ShowSettings();
             menu.Items.Add(settingsItem);
-            
+
             menu.Items.Add(new ToolStripSeparator());
 
             var toggleText = _settingsService.Settings.IsEnabled
@@ -110,13 +91,13 @@ namespace Munqith.UI
                 _trayIcon.ContextMenuStrip = CreateContextMenu();
             };
             menu.Items.Add(toggleItem);
-            
+
             menu.Items.Add(new ToolStripSeparator());
 
-            var aboutItem = new ToolStripMenuItem(isArabic ? "ℹ️  عن البرنامج" : "ℹ️  About");
+            var aboutItem = new ToolStripMenuItem(isArabic ? "ℹ️  عن مُنقِذ" : "ℹ️  About Munqith");
             aboutItem.Click += (s, e) => ShowAbout();
             menu.Items.Add(aboutItem);
-            
+
             menu.Items.Add(new ToolStripSeparator());
 
             var exitItem = new ToolStripMenuItem(isArabic ? "❌  خروج" : "❌  Exit");
@@ -138,7 +119,6 @@ namespace Munqith.UI
             }
             catch { }
 
-            // Fallback generated icon if file is missing
             var bitmap = new Bitmap(32, 32);
             using (var g = Graphics.FromImage(bitmap))
             {
@@ -190,8 +170,8 @@ namespace Munqith.UI
 
         private void ExitApp()
         {
-            _hotkeyManager?.Dispose();
-            _hotkeyForm?.Close();
+            _keyboardHook.Stop();
+            _keyboardHook.Dispose();
             _trayIcon.Visible = false;
             _trayIcon.Dispose();
             Application.Exit();
@@ -201,39 +181,10 @@ namespace Munqith.UI
         {
             if (disposing)
             {
-                _hotkeyManager?.Dispose();
+                _keyboardHook.Dispose();
                 _trayIcon.Dispose();
             }
             base.Dispose(disposing);
-        }
-    }
-
-    internal class HotkeyListenerForm : Form
-    {
-        private GlobalHotkeyManager? _hotkeyManager;
-        public event Action<int>? HotkeyPressed;
-
-        public HotkeyListenerForm()
-        {
-            this.ShowInTaskbar = false;
-            this.WindowState = FormWindowState.Minimized;
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.Opacity = 0;
-            this.Show();
-            this.Hide();
-        }
-
-        public void SetHotkeyManager(GlobalHotkeyManager manager) => _hotkeyManager = manager;
-
-        protected override void WndProc(ref Message m)
-        {
-            if (m.Msg == NativeMethods.WM_HOTKEY)
-            {
-                int id = m.WParam.ToInt32();
-                _hotkeyManager?.ProcessHotkey(id);
-                HotkeyPressed?.Invoke(id);
-            }
-            base.WndProc(ref m);
         }
     }
 }

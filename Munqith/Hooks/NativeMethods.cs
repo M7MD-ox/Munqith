@@ -4,6 +4,24 @@ namespace Munqith.Hooks
 {
     internal static class NativeMethods
     {
+        public delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hMod, uint dwThreadId);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        [DllImport("user32.dll")]
+        public static extern short GetKeyState(int nVirtKey);
+
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
@@ -19,22 +37,17 @@ namespace Munqith.Hooks
         [DllImport("user32.dll")]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        // Window messages
         public const int WM_HOTKEY = 0x0312;
-
-        // Modifier keys for RegisterHotKey
         public const uint MOD_ALT = 0x0001;
         public const uint MOD_CONTROL = 0x0002;
         public const uint MOD_SHIFT = 0x0004;
         public const uint MOD_WIN = 0x0008;
         public const uint MOD_NOREPEAT = 0x4000;
 
-        // SendInput constants
         public const int INPUT_KEYBOARD = 1;
         public const uint KEYEVENTF_KEYUP = 0x0002;
         public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
 
-        // Virtual Key codes
         public const ushort VK_CONTROL = 0x11;
         public const ushort VK_SHIFT = 0x10;
         public const ushort VK_MENU = 0x12; // Alt

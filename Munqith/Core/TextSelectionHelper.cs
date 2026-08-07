@@ -6,10 +6,33 @@ namespace Munqith.Core
 {
     public static class TextSelectionHelper
     {
-        private const int KEY_DELAY_MS = 50;
+        private const int KEY_DELAY_MS = 30;
+
+        /// <summary>
+        /// Release physical modifier keys if held so SendInput keyboard shortcuts fire cleanly
+        /// </summary>
+        public static void ReleaseModifiers()
+        {
+            var inputs = new List<NativeMethods.INPUT>();
+
+            if ((NativeMethods.GetKeyState((int)Keys.ControlKey) & 0x8000) != 0)
+                inputs.Add(CreateKeyInput(NativeMethods.VK_CONTROL, true));
+
+            if ((NativeMethods.GetKeyState((int)Keys.Menu) & 0x8000) != 0)
+                inputs.Add(CreateKeyInput(NativeMethods.VK_MENU, true));
+
+            if ((NativeMethods.GetKeyState((int)Keys.ShiftKey) & 0x8000) != 0)
+                inputs.Add(CreateKeyInput(NativeMethods.VK_SHIFT, true));
+
+            if (inputs.Count > 0)
+            {
+                NativeMethods.SendInput((uint)inputs.Count, inputs.ToArray(), Marshal.SizeOf<NativeMethods.INPUT>());
+            }
+        }
 
         public static async Task SimulateCopy()
         {
+            ReleaseModifiers();
             await Task.Delay(KEY_DELAY_MS);
             SendKeyCombo(NativeMethods.VK_CONTROL, NativeMethods.VK_C);
             await Task.Delay(KEY_DELAY_MS * 3);
@@ -17,18 +40,25 @@ namespace Munqith.Core
 
         public static async Task SimulatePaste()
         {
+            ReleaseModifiers();
+            await Task.Delay(KEY_DELAY_MS);
             SendKeyCombo(NativeMethods.VK_CONTROL, NativeMethods.VK_V);
             await Task.Delay(KEY_DELAY_MS);
         }
 
         public static async Task SimulateSelectAll()
         {
+            ReleaseModifiers();
+            await Task.Delay(KEY_DELAY_MS);
             SendKeyCombo(NativeMethods.VK_CONTROL, NativeMethods.VK_A);
             await Task.Delay(KEY_DELAY_MS);
         }
 
         public static async Task SimulateSelectLastWord()
         {
+            ReleaseModifiers();
+            await Task.Delay(KEY_DELAY_MS);
+
             var inputs = new NativeMethods.INPUT[6];
             inputs[0] = CreateKeyInput(NativeMethods.VK_CONTROL, false);
             inputs[1] = CreateKeyInput(NativeMethods.VK_SHIFT, false);
@@ -36,6 +66,7 @@ namespace Munqith.Core
             inputs[3] = CreateKeyInput(NativeMethods.VK_LEFT, true);
             inputs[4] = CreateKeyInput(NativeMethods.VK_SHIFT, true);
             inputs[5] = CreateKeyInput(NativeMethods.VK_CONTROL, true);
+
             NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<NativeMethods.INPUT>());
             await Task.Delay(KEY_DELAY_MS);
         }
