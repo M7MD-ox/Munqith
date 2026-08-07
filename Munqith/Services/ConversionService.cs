@@ -16,9 +16,6 @@ namespace Munqith.Services
             _statsService = statsService;
         }
 
-        /// <summary>
-        /// Main conversion method — called when hotkey is pressed.
-        /// </summary>
         public async Task PerformConversion()
         {
             if (!_settingsService.Settings.IsEnabled) return;
@@ -28,14 +25,20 @@ namespace Munqith.Services
             try
             {
                 // Small delay to let hotkey keys release
-                await Task.Delay(100);
+                await Task.Delay(80);
 
-                // Get text based on conversion mode
+                // Try configured conversion mode first
                 string? text = await TextSelectionHelper.GetTextForConversion(settings.ConversionMode);
 
-                if (string.IsNullOrEmpty(text)) return;
+                // Smart Fallback: If no text was selected, fallback to LastWord mode automatically
+                if (string.IsNullOrWhiteSpace(text) && settings.ConversionMode == ConversionMode.SelectedText)
+                {
+                    text = await TextSelectionHelper.GetTextForConversion(ConversionMode.LastWord);
+                }
 
-                // Check for Undo: if text matches last conversion, restore original
+                if (string.IsNullOrWhiteSpace(text)) return;
+
+                // Check for Undo: if text matches last converted text, restore original
                 if (_lastConvertedText != null && text.Trim() == _lastConvertedText.Trim())
                 {
                     ClipboardHelper.SetText(_lastOriginalText!);
@@ -45,7 +48,7 @@ namespace Munqith.Services
                     return;
                 }
 
-                // Convert the text
+                // Convert text
                 string converted;
                 if (settings.SmartDetectionEnabled)
                 {
@@ -63,7 +66,7 @@ namespace Munqith.Services
                 _lastOriginalText = text;
                 _lastConvertedText = converted;
 
-                // Paste the converted text
+                // Paste converted text into active window
                 ClipboardHelper.SetText(converted);
                 await TextSelectionHelper.SimulatePaste();
 

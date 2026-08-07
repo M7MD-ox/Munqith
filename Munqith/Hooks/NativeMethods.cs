@@ -19,6 +19,13 @@ namespace Munqith.Hooks
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr GetModuleHandle(string lpModuleName);
 
+        /// <summary>
+        /// GetAsyncKeyState returns real-time physical key state across all OS threads.
+        /// High-order bit (0x8000) is set if key is down.
+        /// </summary>
+        [DllImport("user32.dll")]
+        public static extern short GetAsyncKeyState(int vKey);
+
         [DllImport("user32.dll")]
         public static extern short GetKeyState(int nVirtKey);
 

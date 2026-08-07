@@ -35,7 +35,6 @@ namespace Munqith.Hooks
         {
             if (_hookID == IntPtr.Zero)
             {
-                // In single-file .NET 8 apps, user32.dll module handle is guaranteed to be valid for global WH_KEYBOARD_LL hooks
                 IntPtr hInstance = NativeMethods.GetModuleHandle("user32.dll");
                 if (hInstance == IntPtr.Zero)
                 {
@@ -68,9 +67,10 @@ namespace Munqith.Hooks
                 int vkCode = Marshal.ReadInt32(lParam);
                 Keys key = (Keys)vkCode;
 
-                bool ctrl = (NativeMethods.GetKeyState((int)Keys.ControlKey) & 0x8000) != 0;
-                bool alt = (NativeMethods.GetKeyState((int)Keys.Menu) & 0x8000) != 0;
-                bool shift = (NativeMethods.GetKeyState((int)Keys.ShiftKey) & 0x8000) != 0;
+                // CRITICAL FIX: Use GetAsyncKeyState for global asynchronous key state
+                bool ctrl = (NativeMethods.GetAsyncKeyState((int)Keys.ControlKey) & 0x8000) != 0;
+                bool alt = (NativeMethods.GetAsyncKeyState((int)Keys.Menu) & 0x8000) != 0;
+                bool shift = (NativeMethods.GetAsyncKeyState((int)Keys.ShiftKey) & 0x8000) != 0;
 
                 int currentModifiers = 0;
                 if (alt) currentModifiers |= 1;
@@ -96,7 +96,7 @@ namespace Munqith.Hooks
                 if (matchedBinding != null)
                 {
                     Task.Run(() => HotkeyTriggered?.Invoke(matchedBinding));
-                    return (IntPtr)1;
+                    return (IntPtr)1; // Block key from reaching target app
                 }
             }
 
