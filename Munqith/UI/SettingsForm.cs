@@ -21,14 +21,19 @@ namespace Munqith.UI
         private Color _textColor;
         private Color _subTextColor;
         private Color _borderColor;
-        private readonly Color _accentColor = Color.FromArgb(0, 120, 212); // Windows Blue Accent
-        private readonly Color _accentHover = Color.FromArgb(16, 110, 190);
+        private readonly Color _accentColor = Color.FromArgb(0, 120, 212);
 
         // Tab state
-        private int _selectedTabIndex = 0; // 0: Stats, 1: Settings, 2: Hotkeys, 3: About
+        private int _selectedTabIndex = 0;
         private Panel _headerPanel = null!;
         private Panel _navTabBar = null!;
         private Panel _contentPanel = null!;
+
+        // Stats Labels for dynamic update
+        private Label? _heroCountLabel;
+        private Label? _heroCharsLabel;
+        private Label? _heroWordsLabel;
+        private Label? _heroTimeLabel;
 
         // Hotkey Recorder state
         private bool _isRecordingHotkey = false;
@@ -90,15 +95,12 @@ namespace Munqith.UI
         {
             this.Controls.Clear();
 
-            // 1. TOP HEADER BAR
             _headerPanel = CreateTopHeader();
             this.Controls.Add(_headerPanel);
 
-            // 2. NAV TAB BAR
             _navTabBar = CreateNavTabBar();
             this.Controls.Add(_navTabBar);
 
-            // 3. MAIN CONTENT CONTAINER
             _contentPanel = new Panel
             {
                 Location = new Point(0, 115),
@@ -109,7 +111,6 @@ namespace Munqith.UI
             };
             this.Controls.Add(_contentPanel);
 
-            // Render active tab content
             RenderActiveTabContent();
         }
 
@@ -123,7 +124,6 @@ namespace Munqith.UI
                 Padding = new Padding(15, 10, 15, 10)
             };
 
-            // Title Label
             var titleLbl = new Label
             {
                 Text = _isArabic ? "🛡️ مُنقِذ Munqith" : "🛡️ Munqith",
@@ -134,7 +134,6 @@ namespace Munqith.UI
             };
             p.Controls.Add(titleLbl);
 
-            // Status Badge
             bool active = _settingsService.Settings.IsEnabled;
             var statusBadge = new Label
             {
@@ -147,7 +146,6 @@ namespace Munqith.UI
             };
             p.Controls.Add(statusBadge);
 
-            // Theme Toggle Button
             var themeBtn = new Button
             {
                 Text = _isDark ? "☀️ Light" : "🌙 Dark",
@@ -171,7 +169,6 @@ namespace Munqith.UI
             };
             p.Controls.Add(themeBtn);
 
-            // Language Toggle Button
             var langBtn = new Button
             {
                 Text = _isArabic ? "EN" : "عربي",
@@ -270,7 +267,7 @@ namespace Munqith.UI
 
             // Rescue Hero Card
             var heroCard = CreateCard(yPos, 140);
-            
+
             var heroTitle = new Label
             {
                 Text = _isArabic ? "تم إنقاذك من إعادة الكتابة" : "Rescued Typing Counter",
@@ -281,7 +278,7 @@ namespace Munqith.UI
             };
             heroCard.Controls.Add(heroTitle);
 
-            var heroCount = new Label
+            _heroCountLabel = new Label
             {
                 Text = _statsService.TotalConversions.ToString("N0"),
                 Font = new Font("Segoe UI", 36, FontStyle.Bold),
@@ -289,7 +286,7 @@ namespace Munqith.UI
                 AutoSize = true,
                 Location = new Point(15, 32)
             };
-            heroCard.Controls.Add(heroCount);
+            heroCard.Controls.Add(_heroCountLabel);
 
             var heroUnit = new Label
             {
@@ -297,33 +294,32 @@ namespace Munqith.UI
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = _textColor,
                 AutoSize = true,
-                Location = new Point(heroCount.PreferredWidth + 22, 54)
+                Location = new Point(_heroCountLabel.PreferredWidth + 22, 54)
             };
             heroCard.Controls.Add(heroUnit);
 
-            // 3 Metrics cards
             int cardW = 150;
             int cardH = 45;
             int yMetrics = 85;
 
-            AddMetricTile(heroCard, 15, yMetrics, cardW, cardH,
+            _heroCharsLabel = AddMetricTile(heroCard, 15, yMetrics, cardW, cardH,
                 _statsService.TotalCharacters.ToString("N0"),
                 _isArabic ? "حرف تم تصحيحه" : "Chars Fixed");
 
-            AddMetricTile(heroCard, 175, yMetrics, cardW, cardH,
+            _heroWordsLabel = AddMetricTile(heroCard, 175, yMetrics, cardW, cardH,
                 _statsService.TotalWords.ToString("N0"),
                 _isArabic ? "كلمة مُنقَذة" : "Words Saved");
 
-            string timeSavedStr = _isArabic ? _statsService.GetTimeSavedDisplayArabic() : _statsService.GetTimeSavedDisplay();
-            AddMetricTile(heroCard, 335, yMetrics, cardW, cardH,
-                timeSavedStr,
+            string timeDisplayStr = _isArabic ? _statsService.GetTimeSavedDisplayArabic() : _statsService.GetTimeSavedDisplay();
+            _heroTimeLabel = AddMetricTile(heroCard, 335, yMetrics, cardW, cardH,
+                timeDisplayStr,
                 _isArabic ? "وقت مُوفَّر" : "Time Saved");
 
             container.Controls.Add(heroCard);
             yPos += 155;
 
             // Live Test Playground Card
-            var testCard = CreateCard(yPos, 175);
+            var testCard = CreateCard(yPos, 180);
             var testTitle = new Label
             {
                 Text = _isArabic ? "🧪 منطقة تجربة الأداة الفورية" : "🧪 Live Instant Converter Test",
@@ -336,9 +332,9 @@ namespace Munqith.UI
 
             var testDesc = new Label
             {
-                Text = _isArabic 
-                    ? "اكتب أي نص إنجليزي لخبطة هنا (مثلاً: hgf,hfm) ثم حدده واضغط الاختصار (Ctrl+Q):" 
-                    : "Type garbled text below (e.g. hgf,hfm), select it, then press Ctrl+Q:",
+                Text = _isArabic
+                    ? "اكتب أي نص إنجليزي لخبطة هنا (مثلاً: hgf,hfm) ثم اضغط زر التحويل لتجربة التحويل:"
+                    : "Type garbled text below (e.g. hgf,hfm) and click convert to test instantly:",
                 Font = new Font("Segoe UI", 8.5f),
                 ForeColor = _subTextColor,
                 AutoSize = true,
@@ -373,7 +369,7 @@ namespace Munqith.UI
             {
                 if (!string.IsNullOrEmpty(testBox.Text))
                 {
-                    string converted = SmartDetector.SmartConvert(testBox.Text, _settingsService.Settings.SelectedLayout);
+                    string converted = LayoutConverter.Convert(testBox.Text, _settingsService.Settings.SelectedLayout);
                     testBox.Text = converted;
                     var res = new ConversionResult
                     {
@@ -382,7 +378,12 @@ namespace Munqith.UI
                         WordCount = converted.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length
                     };
                     _statsService.RecordConversion(res);
-                    BuildFullUI(); // Refresh stats
+
+                    // Update stats labels in-place WITHOUT resetting the text box!
+                    if (_heroCountLabel != null) _heroCountLabel.Text = _statsService.TotalConversions.ToString("N0");
+                    if (_heroCharsLabel != null) _heroCharsLabel.Text = _statsService.TotalCharacters.ToString("N0");
+                    if (_heroWordsLabel != null) _heroWordsLabel.Text = _statsService.TotalWords.ToString("N0");
+                    if (_heroTimeLabel != null) _heroTimeLabel.Text = _isArabic ? _statsService.GetTimeSavedDisplayArabic() : _statsService.GetTimeSavedDisplay();
                 }
             };
             testCard.Controls.Add(manualTestBtn);
@@ -390,7 +391,7 @@ namespace Munqith.UI
             container.Controls.Add(testCard);
         }
 
-        private void AddMetricTile(Panel parent, int x, int y, int w, int h, string val, string label)
+        private Label AddMetricTile(Panel parent, int x, int y, int w, int h, string val, string label)
         {
             var tile = new Panel
             {
@@ -420,6 +421,7 @@ namespace Munqith.UI
             tile.Controls.Add(dLbl);
 
             parent.Controls.Add(tile);
+            return vLbl;
         }
 
         // ==========================================
@@ -429,7 +431,6 @@ namespace Munqith.UI
         {
             int yPos = 10;
 
-            // Keyboard Layout Card
             var layoutCard = CreateCard(yPos, 65);
             AddComboSetting(layoutCard,
                 _isArabic ? "⌨️ تخطيط لغة الكيبورد" : "⌨️ Keyboard Layout",
@@ -443,7 +444,6 @@ namespace Munqith.UI
             container.Controls.Add(layoutCard);
             yPos += 78;
 
-            // Conversion Mode Card
             var modeCard = CreateCard(yPos, 65);
             var modes = _isArabic
                 ? new[] { "النص المحدد فقط (Selected Text)", "كل النص في الحقل (All Text)", "آخر كلمة فقط (Last Word)" }
@@ -460,7 +460,6 @@ namespace Munqith.UI
             container.Controls.Add(modeCard);
             yPos += 78;
 
-            // Toggles
             yPos = AddToggleSetting(container, yPos,
                 _isArabic ? "🧠 الكشف الذكي (Smart Detection)" : "🧠 Smart Detection",
                 _isArabic ? "الحفاظ على الكلمات الإنجليزية الصحيحة وتصحيح الكلمات الخطأ فقط" : "Preserves real English words and only converts garbled typos",
@@ -501,7 +500,6 @@ namespace Munqith.UI
         {
             int yPos = 10;
 
-            // Current Hotkeys List Card
             var listCard = CreateCard(yPos, 200);
             var listTitle = new Label
             {
@@ -547,7 +545,6 @@ namespace Munqith.UI
                 };
                 listCard.Controls.Add(chk);
 
-                // Delete button
                 var delBtn = new Button
                 {
                     Text = _isArabic ? "حذف" : "Delete",
@@ -574,7 +571,6 @@ namespace Munqith.UI
             container.Controls.Add(listCard);
             yPos += 215;
 
-            // Interactive Hotkey Recorder Card
             var recCard = CreateCard(yPos, 170);
             var recTitle = new Label
             {
@@ -629,13 +625,11 @@ namespace Munqith.UI
 
                 e.SuppressKeyPress = true;
 
-                // Capture modifier keys
                 int mods = 0;
                 if (e.Alt) mods |= 1;
                 if (e.Control) mods |= 2;
                 if (e.Shift) mods |= 4;
 
-                // Non-modifier key pressed
                 if (e.KeyCode != Keys.ControlKey && e.KeyCode != Keys.ShiftKey && e.KeyCode != Keys.Menu && e.KeyCode != Keys.None)
                 {
                     _recordedModifiers = mods;
@@ -653,7 +647,6 @@ namespace Munqith.UI
                     _recordButton.BackColor = Color.FromArgb(232, 245, 233);
                     _recordButton.ForeColor = Color.FromArgb(46, 125, 50);
 
-                    // Add to settings
                     _settingsService.Settings.Hotkeys.Add(newBinding);
                     _settingsService.Save();
                     _trayContext.RegisterConfiguredHotkeys();

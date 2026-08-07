@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
 using Munqith.Models;
 
 namespace Munqith.Hooks
@@ -10,8 +9,6 @@ namespace Munqith.Hooks
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;
         private const int WM_SYSKEYDOWN = 0x0200;
-        private const int WM_KEYUP = 0x0101;
-        private const int WM_SYSKEYUP = 0x0201;
 
         private NativeMethods.HookProc _proc;
         private IntPtr _hookID = IntPtr.Zero;
@@ -38,12 +35,19 @@ namespace Munqith.Hooks
         {
             if (_hookID == IntPtr.Zero)
             {
-                using Process curProcess = Process.GetCurrentProcess();
-                using ProcessModule curModule = curProcess.MainModule!;
+                // In single-file .NET 8 apps, user32.dll module handle is guaranteed to be valid for global WH_KEYBOARD_LL hooks
+                IntPtr hInstance = NativeMethods.GetModuleHandle("user32.dll");
+                if (hInstance == IntPtr.Zero)
+                {
+                    using Process curProcess = Process.GetCurrentProcess();
+                    using ProcessModule curModule = curProcess.MainModule!;
+                    hInstance = NativeMethods.GetModuleHandle(curModule.ModuleName);
+                }
+
                 _hookID = NativeMethods.SetWindowsHookEx(
                     WH_KEYBOARD_LL,
                     _proc,
-                    NativeMethods.GetModuleHandle(curModule.ModuleName),
+                    hInstance,
                     0);
             }
         }
@@ -64,7 +68,6 @@ namespace Munqith.Hooks
                 int vkCode = Marshal.ReadInt32(lParam);
                 Keys key = (Keys)vkCode;
 
-                // Check modifiers current physical state
                 bool ctrl = (NativeMethods.GetKeyState((int)Keys.ControlKey) & 0x8000) != 0;
                 bool alt = (NativeMethods.GetKeyState((int)Keys.Menu) & 0x8000) != 0;
                 bool shift = (NativeMethods.GetKeyState((int)Keys.ShiftKey) & 0x8000) != 0;
@@ -92,10 +95,7 @@ namespace Munqith.Hooks
 
                 if (matchedBinding != null)
                 {
-                    // Trigger hotkey callback on separate thread
                     Task.Run(() => HotkeyTriggered?.Invoke(matchedBinding));
-
-                    // Block the key press from reaching the active application
                     return (IntPtr)1;
                 }
             }
