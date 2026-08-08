@@ -57,12 +57,12 @@ namespace Munqith.UI
         private void InitializeForm()
         {
             this.Text = _isArabic ? "مُنقِذ — إعدادات ويندوز 11" : "Munqith — Windows 11 Settings";
-            this.ClientSize = new Size(740, 720);
+            this.ClientSize = new Size(740, 700);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.RightToLeft = _isArabic ? RightToLeft.Yes : RightToLeft.No;
-            this.RightToLeftLayout = false; // Keep coordinate system strictly deterministic
+            this.RightToLeftLayout = false;
             this.Font = new Font("Segoe UI", 9.5f);
 
             UpdateFluentTokens();
@@ -104,7 +104,6 @@ namespace Munqith.UI
 
             if (_isArabic)
             {
-                // Sidebar on the Right, Content on the Left
                 _sidebarPanel = new Panel
                 {
                     Location = new Point(contentWidth, 0),
@@ -124,7 +123,6 @@ namespace Munqith.UI
             }
             else
             {
-                // Sidebar on the Left, Content on the Right
                 _sidebarPanel = new Panel
                 {
                     Location = new Point(0, 0),
@@ -133,14 +131,14 @@ namespace Munqith.UI
                     Padding = new Padding(8)
                 };
 
-                _contentPanel = new Point(sidebarWidth, 0).X > 0 ? new Panel
+                _contentPanel = new Panel
                 {
                     Location = new Point(sidebarWidth, 0),
                     Size = new Size(contentWidth, totalHeight),
                     BackColor = _windowBg,
                     AutoScroll = true,
                     Padding = new Padding(25, 20, 25, 20)
-                } : null!;
+                };
             }
 
             BuildSidebar(_sidebarPanel);
@@ -174,7 +172,7 @@ namespace Munqith.UI
 
             var verLbl = new Label
             {
-                Text = "Windows 11 Fluent v1.0.0",
+                Text = "Windows 11 Edition",
                 Font = new Font("Segoe UI", 8),
                 ForeColor = _textSecondary,
                 AutoSize = true,
@@ -184,7 +182,7 @@ namespace Munqith.UI
 
             sidebar.Controls.Add(logoPanel);
 
-            // Navigation Items (WinUI 3 NavigationView items)
+            // Navigation Items
             string[] navItems = _isArabic
                 ? new[] { "📊  الإحصائيات", "⚙️  الإعدادات", "⌨️  الاختصارات", "ℹ️  عن الأداة" }
                 : new[] { "📊  Dashboard", "⚙️  Settings", "⌨️  Hotkeys", "ℹ️  About" };
@@ -300,7 +298,6 @@ namespace Munqith.UI
             int yPos = 10;
             int cardWidth = 490;
 
-            // Page Header
             AddPageHeader(container, ref yPos,
                 _isArabic ? "لوحة الإحصائيات والإنقاذ" : "Dashboard & Rescue Stats",
                 _isArabic ? "متابعة عدد مرات تصحيح الكلمات وتوفير وقت الكتابة في ويندوز" : "Real-time statistics of corrected keystrokes and typing time saved");
@@ -411,7 +408,7 @@ namespace Munqith.UI
             {
                 if (!string.IsNullOrEmpty(testBox.Text))
                 {
-                    string converted = LayoutConverter.Convert(testBox.Text, _settingsService.Settings.SelectedLayout);
+                    string converted = LayoutConverter.Convert(testBox.Text, KeyboardLayout.WindowsArabicPC);
                     testBox.Text = converted;
                     var res = new ConversionResult
                     {
@@ -466,7 +463,7 @@ namespace Munqith.UI
         }
 
         // ==========================================
-        // 2. SETTINGS CARDS (Official Windows 11 Pattern)
+        // 2. SETTINGS CARDS
         // ==========================================
         private void BuildSettingsCardsView(Panel container)
         {
@@ -474,37 +471,10 @@ namespace Munqith.UI
             int cardWidth = 490;
 
             AddPageHeader(container, ref yPos,
-                _isArabic ? "إعدادات الأداة والتخطيط" : "General Settings & Layouts",
-                _isArabic ? "تخصيص تخطيط لوحة المفاتيح وسلوك التحويل التلقائي في ويندوز" : "Configure keyboard layout mapping and conversion scope behavior");
+                _isArabic ? "إعدادات الأداة والنظام" : "General Settings & Controls",
+                _isArabic ? "تخصيص سلوك التحويل التلقائي والتشغيل في ويندوز" : "Configure conversion scope behavior and startup options");
 
-            // SettingsCard 1: Keyboard Layout
-            var layoutCard = CreateSettingsCard(yPos, cardWidth, 68);
-            AddCardTexts(layoutCard,
-                _isArabic ? "⌨️  تخطيط لوحة المفاتيح" : "⌨️  Keyboard Layout",
-                _isArabic ? "تحديد تخطيط الحروف (ويندوز العربي القياسي أو الماك)" : "Target keyboard mapping layout (Windows PC or Mac Arabic)");
-
-            var layoutCombo = new ComboBox
-            {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 9.5f),
-                Size = new Size(185, 30),
-                Location = new Point(285, 18),
-                BackColor = _isDark ? Color.FromArgb(52, 52, 52) : Color.White,
-                ForeColor = _textPrimary,
-                FlatStyle = FlatStyle.Flat
-            };
-            layoutCombo.Items.AddRange(new[] { "Windows Arabic PC", "Mac Arabic" });
-            layoutCombo.SelectedIndex = (int)_settingsService.Settings.SelectedLayout;
-            layoutCombo.SelectedIndexChanged += (s, e) =>
-            {
-                _settingsService.Settings.SelectedLayout = (KeyboardLayout)layoutCombo.SelectedIndex;
-                _settingsService.Save();
-            };
-            layoutCard.Controls.Add(layoutCombo);
-            container.Controls.Add(layoutCard);
-            yPos += 80;
-
-            // SettingsCard 2: Conversion Scope Mode
+            // SettingsCard 1: Conversion Scope Mode
             var modeCard = CreateSettingsCard(yPos, cardWidth, 68);
             AddCardTexts(modeCard,
                 _isArabic ? "🎯  وضع ونطاق التحويل" : "🎯  Conversion Scope Mode",
@@ -534,7 +504,7 @@ namespace Munqith.UI
             container.Controls.Add(modeCard);
             yPos += 80;
 
-            // SettingsCard 3: Smart Detection (ToggleSwitch)
+            // SettingsCard 2: Smart Detection (ToggleSwitch)
             yPos = AddToggleSettingsCard(container, yPos, cardWidth,
                 _isArabic ? "🧠  الكشف الذكي (Smart Detection)" : "🧠  Smart Word Detection",
                 _isArabic ? "الحفاظ على الكلمات الإنجليزية الصحيحة وتصحيح الحروف الخطأ فقط" : "Preserves valid English vocabulary and only converts typos",
@@ -545,7 +515,7 @@ namespace Munqith.UI
                     _settingsService.Save();
                 });
 
-            // SettingsCard 4: Launch with Windows (ToggleSwitch)
+            // SettingsCard 3: Launch with Windows (ToggleSwitch)
             yPos = AddToggleSettingsCard(container, yPos, cardWidth,
                 _isArabic ? "🚀  بدء التشغيل مع الويندوز" : "🚀  Launch on Windows Startup",
                 _isArabic ? "تشغيل الأداة تلقائياً في الخلفية عند فتح الكمبيوتر" : "Automatically runs Munqith in the system tray when Windows boots",
@@ -555,18 +525,6 @@ namespace Munqith.UI
                     _settingsService.Settings.StartWithWindows = val;
                     StartupService.SetStartup(val);
                     _settingsService.Save();
-                });
-
-            // SettingsCard 5: Enable/Pause Tool (ToggleSwitch)
-            yPos = AddToggleSettingsCard(container, yPos, cardWidth,
-                _isArabic ? "⚡  تفعيل عمل الأداة" : "⚡  Enable Utility Hooks",
-                _isArabic ? "تفعيل أو إيقاف استجابة الأداة لاختصارات الكيبورد مؤقتاً" : "Master switch to enable or pause keyboard shortcuts globally",
-                _settingsService.Settings.IsEnabled,
-                val =>
-                {
-                    _settingsService.Settings.IsEnabled = val;
-                    _settingsService.Save();
-                    _trayContext.CreateContextMenu();
                 });
 
             // Instant Save Card with Fluent Button
@@ -616,7 +574,7 @@ namespace Munqith.UI
         }
 
         // ==========================================
-        // 3. HOTKEYS & INTERACTIVE RECORDER
+        // 3. HOTKEYS & INTERACTIVE KEY RECORDER
         // ==========================================
         private void BuildHotkeysCardsView(Panel container)
         {
@@ -624,7 +582,7 @@ namespace Munqith.UI
             int cardWidth = 490;
 
             AddPageHeader(container, ref yPos,
-                _isArabic ? "إدارة الاختصارات ومُسجّل المفاتيح" : "Global Hotkeys & Key Recorder",
+                _isArabic ? "إدارة الاختصارات ومُسجّل الكيبورد" : "Global Hotkeys & Key Recorder",
                 _isArabic ? "إضافة وتخصيص مفاتيح الاختصار لتشغيل التحويل في أي مكان" : "Manage active global hotkey combinations or record new shortcuts");
 
             // Hotkeys List Card
@@ -697,11 +655,11 @@ namespace Munqith.UI
             container.Controls.Add(listCard);
             yPos += 202;
 
-            // Interactive Recorder Card
+            // Interactive Keyboard Recorder Card (KEYBOARD ONLY - MOUSE FULLY BLOCKED)
             var recCard = CreateSettingsCard(yPos, cardWidth, 160);
             var recTitle = new Label
             {
-                Text = _isArabic ? "🎙️  مسجل الاختصارات التفاعلي (Key Recorder)" : "🎙️  Interactive Key Recorder",
+                Text = _isArabic ? "⌨️  مسجل اختصارات الكيبورد (Keyboard Hotkey Recorder)" : "⌨️  Keyboard Hotkey Recorder",
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = _textPrimary,
                 AutoSize = true,
@@ -712,8 +670,8 @@ namespace Munqith.UI
             var recDesc = new Label
             {
                 Text = _isArabic
-                    ? "اضغط على الحقل ثم اضغط أي تركيبة مفاتيح على الكيبورد لتسجيلها فوراً:"
-                    : "Click below and press any key combination on keyboard to bind instantly:",
+                    ? "اضغط على الزر ثم اضغط مفاتيح الاختصار على الكيبورد مباشرة (مثل Alt+Q أو Ctrl+Shift+Z):"
+                    : "Click below then press your desired keyboard hotkey combination (e.g. Alt+Q or Ctrl+Shift+Z):",
                 Font = new Font("Segoe UI", 8.5f),
                 ForeColor = _textSecondary,
                 AutoSize = true,
@@ -723,7 +681,7 @@ namespace Munqith.UI
 
             _recordButton = new Button
             {
-                Text = _isArabic ? "اضغط هنا لبدء تسجيل الاختصار..." : "Click here to record shortcut...",
+                Text = _isArabic ? "⌨️ اضغط هنا لتسجيل اختصار الكيبورد..." : "⌨️ Click here to record keyboard shortcut...",
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 Size = new Size(450, 42),
                 Location = new Point(18, 62),
@@ -738,50 +696,56 @@ namespace Munqith.UI
             _recordButton.Click += (s, e) =>
             {
                 _isRecordingHotkey = true;
-                _recordButton.Text = _isArabic ? "⏳ جاري الاستماع... اضغط مفاتيحك الآن!" : "⏳ Listening... Press your keys now!";
+                _recordButton.Text = _isArabic ? "⏳ جاري الاستماع... اضغط مفاتيح الكيبورد الآن!" : "⏳ Listening... Press keyboard keys now!";
                 _recordButton.BackColor = Color.FromArgb(255, 236, 179);
                 _recordButton.ForeColor = Color.Black;
                 _recordButton.Focus();
             };
 
+            // STRICT KEYBOARD CAPTURE ONLY - BLOCK ALL MOUSE KEYS
             _recordButton.KeyDown += (s, e) =>
             {
                 if (!_isRecordingHotkey) return;
 
                 e.SuppressKeyPress = true;
 
+                // IGNORE MOUSE KEYS OR RAW MODIFIER PRESSES ALONE
+                if (e.KeyCode == Keys.LButton || e.KeyCode == Keys.RButton || e.KeyCode == Keys.MButton ||
+                    e.KeyCode == Keys.XButton1 || e.KeyCode == Keys.XButton2 ||
+                    e.KeyCode == Keys.ControlKey || e.KeyCode == Keys.ShiftKey || e.KeyCode == Keys.Menu || e.KeyCode == Keys.None)
+                {
+                    return; // Ignore raw mouse and solo modifier
+                }
+
                 int mods = 0;
                 if (e.Alt) mods |= 1;
                 if (e.Control) mods |= 2;
                 if (e.Shift) mods |= 4;
 
-                if (e.KeyCode != Keys.ControlKey && e.KeyCode != Keys.ShiftKey && e.KeyCode != Keys.Menu && e.KeyCode != Keys.None)
+                _isRecordingHotkey = false;
+
+                var newBinding = new HotkeyBinding
                 {
-                    _isRecordingHotkey = false;
+                    ModifierKeysValue = mods,
+                    KeyValue = (int)e.KeyCode,
+                    IsEnabled = true
+                };
 
-                    var newBinding = new HotkeyBinding
+                _recordButton.Text = $"✅ تم تسجيل: {newBinding.DisplayName}";
+                _recordButton.BackColor = Color.FromArgb(232, 245, 233);
+                _recordButton.ForeColor = Color.FromArgb(46, 125, 50);
+
+                _settingsService.Settings.Hotkeys.Add(newBinding);
+                _settingsService.Save();
+                _trayContext.RegisterConfiguredHotkeys();
+
+                Task.Delay(1000).ContinueWith(_ =>
+                {
+                    if (this.IsHandleCreated)
                     {
-                        ModifierKeysValue = mods,
-                        KeyValue = (int)e.KeyCode,
-                        IsEnabled = true
-                    };
-
-                    _recordButton.Text = $"✅ تم تسجيل: {newBinding.DisplayName}";
-                    _recordButton.BackColor = Color.FromArgb(232, 245, 233);
-                    _recordButton.ForeColor = Color.FromArgb(46, 125, 50);
-
-                    _settingsService.Settings.Hotkeys.Add(newBinding);
-                    _settingsService.Save();
-                    _trayContext.RegisterConfiguredHotkeys();
-
-                    Task.Delay(1000).ContinueWith(_ =>
-                    {
-                        if (this.IsHandleCreated)
-                        {
-                            this.Invoke(() => BuildFluentUI());
-                        }
-                    });
-                }
+                        this.Invoke(() => BuildFluentUI());
+                    }
+                });
             };
 
             recCard.Controls.Add(_recordButton);
@@ -816,9 +780,9 @@ namespace Munqith.UI
             {
                 Text = _isArabic
                     ? "أداة ويندوز سريعة ولحظية تصحح لغة الكتابة تلقائياً في جميع برامج الجهاز بضغطة اختصار واحدة.\n\n" +
-                      "مصممة وفق معايير مايكروسوفت الرسمية لتصميم تطبيقات ويندوز 11 (Fluent Design System & WinUI 3)."
+                      "مصممة خصيصاً لنظام Windows 11 وفق معايير Fluent Design System الرسمية."
                     : "Fast, instantaneous Windows utility that auto-corrects text typed with the wrong keyboard layout across all Windows apps.\n\n" +
-                      "Crafted adhering to Microsoft's official Windows 11 Fluent Design System guidelines.",
+                      "Engineered for Windows 11 adhering to official Fluent Design System guidelines.",
                 Font = new Font("Segoe UI", 9.5f),
                 ForeColor = _textPrimary,
                 AutoSize = true,
@@ -830,12 +794,12 @@ namespace Munqith.UI
             var techInfo = new Label
             {
                 Text = _isArabic
-                    ? "• التقنية: C# .NET 8.0 (LTS) — Self-contained Single Executable\n" +
-                      "• نمط التصميم: Windows 11 Fluent SettingsCard & WinUI 3 Navigation\n" +
-                      "• الاستجابة: Win32 Native Clipboard with Micro-Delays (<30ms)"
-                    : "• Tech Stack: C# .NET 8.0 (LTS) — Self-contained Single Executable\n" +
-                      "• Design System: Windows 11 Fluent SettingsCard & WinUI 3 Navigation\n" +
-                      "• Performance: Win32 Native Clipboard with Micro-Delays (<30ms)",
+                    ? "• نظام التشغيل: Windows 10 / Windows 11\n" +
+                      "• التقنية: C# .NET 8.0 (LTS) — Self-contained Single Executable\n" +
+                      "• الاستجابة: Win32 Low-Level Hook + Native Clipboard (<30ms)"
+                    : "• OS: Windows 10 / Windows 11\n" +
+                      "• Tech Stack: C# .NET 8.0 (LTS) — Self-contained Single Executable\n" +
+                      "• Response: Win32 Low-Level Hook + Native Clipboard (<30ms)",
                 Font = new Font("Segoe UI", 8.8f),
                 ForeColor = _textSecondary,
                 AutoSize = true,

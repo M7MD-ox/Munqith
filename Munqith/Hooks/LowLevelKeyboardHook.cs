@@ -8,7 +8,7 @@ namespace Munqith.Hooks
     {
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;
-        private const int WM_SYSKEYDOWN = 0x0200;
+        private const int WM_SYSKEYDOWN = 0x0104; // Official Windows Win32 WM_SYSKEYDOWN (Fix for Alt+Key combinations)
 
         private NativeMethods.HookProc _proc;
         private IntPtr _hookID = IntPtr.Zero;
@@ -62,15 +62,16 @@ namespace Munqith.Hooks
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            if (nCode >= 0 && (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN))
+            int message = (int)wParam;
+            if (nCode >= 0 && (message == WM_KEYDOWN || message == WM_SYSKEYDOWN))
             {
                 int vkCode = Marshal.ReadInt32(lParam);
                 Keys key = (Keys)vkCode;
 
-                // CRITICAL FIX: Use GetAsyncKeyState for global asynchronous key state
-                bool ctrl = (NativeMethods.GetAsyncKeyState((int)Keys.ControlKey) & 0x8000) != 0;
-                bool alt = (NativeMethods.GetAsyncKeyState((int)Keys.Menu) & 0x8000) != 0;
-                bool shift = (NativeMethods.GetAsyncKeyState((int)Keys.ShiftKey) & 0x8000) != 0;
+                // Check physical modifier state asynchronously via GetAsyncKeyState
+                bool ctrl = (NativeMethods.GetAsyncKeyState(0x11) & 0x8000) != 0; // VK_CONTROL
+                bool alt = (NativeMethods.GetAsyncKeyState(0x12) & 0x8000) != 0 || message == WM_SYSKEYDOWN; // VK_MENU (Alt)
+                bool shift = (NativeMethods.GetAsyncKeyState(0x10) & 0x8000) != 0; // VK_SHIFT
 
                 int currentModifiers = 0;
                 if (alt) currentModifiers |= 1;
@@ -96,7 +97,7 @@ namespace Munqith.Hooks
                 if (matchedBinding != null)
                 {
                     Task.Run(() => HotkeyTriggered?.Invoke(matchedBinding));
-                    return (IntPtr)1; // Block key from reaching target app
+                    return (IntPtr)1; // Suppress key stroke to prevent double insertion in target app
                 }
             }
 

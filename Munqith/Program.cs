@@ -1,3 +1,5 @@
+using Munqith.Hooks;
+using Munqith.Services;
 using Munqith.UI;
 
 namespace Munqith
@@ -12,7 +14,7 @@ namespace Munqith
             if (!isNewInstance)
             {
                 MessageBox.Show(
-                    "مُنقِذ Munqith is already running!",
+                    "مُنقِذ Munqith is already running in the system tray!",
                     "Munqith",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
@@ -20,7 +22,13 @@ namespace Munqith
             }
 
             ApplicationConfiguration.Initialize();
-            Application.Run(new TrayApplicationContext());
+
+            var settingsService = new SettingsService();
+            var statsService = new StatsService(settingsService);
+            var conversionService = new ConversionService(settingsService, statsService);
+            var keyboardHook = new LowLevelKeyboardHook();
+
+            Application.Run(new TrayApplicationContext(settingsService, statsService, conversionService, keyboardHook));
         }
     }
 }
