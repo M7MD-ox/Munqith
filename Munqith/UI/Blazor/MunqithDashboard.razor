@@ -1,0 +1,388 @@
+@using Munqith.Core
+@using Munqith.Models
+@using Munqith.Services
+@inject SettingsService SettingsService
+@inject StatsService StatsService
+
+<div class="munqith-container @(IsDarkMode ? "dark-theme" : "") @(IsArabic ? "rtl-mode" : "")">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="brand-section">
+            <div class="brand-logo-badge">
+                🛡️
+            </div>
+            <div>
+                <h1 class="serif-heading brand-title">@(IsArabic ? "مُنقِذ" : "Munqith")</h1>
+                <span class="brand-status-pill">@(IsArabic ? "يعمل في الخلفية وجاهز للإنقاذ" : "Active in Background")</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="claude-btn-secondary" @onclick="ToggleTheme">
+                @(IsDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode")
+            </button>
+            <button class="claude-btn-secondary" @onclick="ToggleLanguage">
+                @(IsArabic ? "🌐 English" : "🌐 العربية")
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation Tab Bar -->
+    <nav class="nav-tab-bar">
+        <button class="nav-tab-button @(ActiveTab == 0 ? "active" : "")" @onclick="() => SetTab(0)">
+            📊 @(IsArabic ? "الإحصائيات" : "Dashboard")
+        </button>
+        <button class="nav-tab-button @(ActiveTab == 1 ? "active" : "")" @onclick="() => SetTab(1)">
+            ⚙️ @(IsArabic ? "الإعدادات" : "Settings")
+        </button>
+        <button class="nav-tab-button @(ActiveTab == 2 ? "active" : "")" @onclick="() => SetTab(2)">
+            ⌨️ @(IsArabic ? "الاختصارات" : "Hotkeys")
+        </button>
+        <button class="nav-tab-button @(ActiveTab == 3 ? "active" : "")" @onclick="() => SetTab(3)">
+            ℹ️ @(IsArabic ? "عن الأداة" : "About")
+        </button>
+    </nav>
+
+    <!-- Main Dynamic Content -->
+    <main class="main-content">
+
+        @if (ActiveTab == 0)
+        {
+            <!-- ==========================================
+                 TAB 0: DASHBOARD & LIVE STATS
+                 ========================================== -->
+            <div class="section-header">
+                <h2 class="serif-heading section-title">@(IsArabic ? "لوحة الإحصائيات والإنقاذ" : "Rescue Statistics")</h2>
+                <p class="section-subtitle">@(IsArabic ? "سجل مباشر لعدد المرات والكلمات التي أنقذك فيها البرنامج مع الوقت المُوفَّر" : "Real-time metrics of corrected words and typing time saved in Windows")</p>
+            </div>
+
+            <div class="claude-card hero-stats-card">
+                <div class="setting-title">@(IsArabic ? "إجمالي عدد مرات الإنقاذ حتى الآن" : "Total Typing Conversions")</div>
+                <div class="serif-heading hero-number-display">@StatsService.TotalConversions.ToString("N0")</div>
+
+                <div class="metrics-grid">
+                    <div class="metric-tile">
+                        <div class="metric-val">@StatsService.TotalCharacters.ToString("N0")</div>
+                        <div class="metric-lbl">@(IsArabic ? "حرف تم تصحيحه" : "Chars Corrected")</div>
+                    </div>
+                    <div class="metric-tile">
+                        <div class="metric-val">@StatsService.TotalWords.ToString("N0")</div>
+                        <div class="metric-lbl">@(IsArabic ? "كلمة تم إنقاذها" : "Words Saved")</div>
+                    </div>
+                    <div class="metric-tile">
+                        <div class="metric-val">@(IsArabic ? StatsService.GetTimeSavedDisplayArabic() : StatsService.GetTimeSavedDisplay())</div>
+                        <div class="metric-lbl">@(IsArabic ? "وقت مُوفَّر" : "Time Saved")</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Playground Card -->
+            <div class="claude-card">
+                <h3 class="serif-heading" style="font-size: 18px; margin: 0 0 6px 0;">
+                    🧪 @(IsArabic ? "منطقة التجربة الفورية المباشرة" : "Live Converter Playground")
+                </h3>
+                <p class="setting-desc" style="margin-bottom: 14px;">
+                    @(IsArabic ? "اكتب أي نص ملخبط هنا واضغط الزر لاختبار التحويل والتقليب فوراً:" : "Type garbled English text below and click button to test instant bidirectional conversion:")
+                </p>
+
+                <div style="display: flex; gap: 10px; flex-direction: column;">
+                    <input type="text" class="claude-input" @bind="PlaygroundText" placeholder="hgf,hfm ,hpim" />
+                    <div>
+                        <button class="claude-btn-primary" @onclick="TestConversion">
+                            🔄 @(IsArabic ? "شقلب النص الآن" : "Convert Text Now")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (ActiveTab == 1)
+        {
+            <!-- ==========================================
+                 TAB 1: SETTINGS & PREFERENCES
+                 ========================================== -->
+            <div class="section-header">
+                <h2 class="serif-heading section-title">@(IsArabic ? "إعدادات الأداة وسلوك التحويل" : "General Settings")</h2>
+                <p class="section-subtitle">@(IsArabic ? "تخصيص الكشف الذكي للكلمات والتشغيل التلقائي في ويندوز" : "Configure smart word detection and Windows startup preferences")</p>
+            </div>
+
+            <!-- Prominent Usage Banner Card -->
+            <div class="info-banner-card">
+                <div class="banner-title">📌 @(IsArabic ? "طريقة الاستخدام الأساسية (In-Place Conversion):" : "Default Usage Mode:")</div>
+                <p class="banner-text">
+                    @(IsArabic
+                        ? "حدد أي كلمة أو جملة بالماوس في أي برنامج (كروم، نوتباد، وورد، تليجرام...) واضغط Alt+Q أو Ctrl+Q ليتم تحويلها واستبدالها في نفس المكان فوراً وبأعلى سرعة!"
+                        : "Highlight any word or full sentence in any app (Chrome, Notepad, Word...) and press Alt+Q or Ctrl+Q to convert and replace in-place instantly!")
+                </p>
+            </div>
+
+            <!-- Smart Detection Setting -->
+            <div class="claude-card setting-row">
+                <div class="setting-texts">
+                    <div class="setting-title">🧠 @(IsArabic ? "الكشف الذكي للكلمات (Smart Vocabulary)" : "Smart Vocabulary Detection")</div>
+                    <p class="setting-desc">@(IsArabic ? "يحافظ على الكلمات الإنجليزية الصحيحة تلقائياً ويصحح فقط أخطاء ولخبطة الكتابة" : "Preserves real English words and only flips actual typing mistakes")</p>
+                </div>
+                <label class="claude-toggle">
+                    <input type="checkbox" @bind="Settings.SmartDetectionEnabled" @bind:after="OnSettingChanged" />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- Launch on Startup Setting -->
+            <div class="claude-card setting-row">
+                <div class="setting-texts">
+                    <div class="setting-title">🚀 @(IsArabic ? "التشغيل التلقائي مع فتح الجهاز" : "Launch on Windows Startup")</div>
+                    <p class="setting-desc">@(IsArabic ? "تشغيل مُنقِذ تلقائياً في الخلفية في شريط المهام عند فتح الويندوز" : "Automatically launch Munqith in the system tray when Windows boots up")</p>
+                </div>
+                <label class="claude-toggle">
+                    <input type="checkbox" @bind="Settings.StartWithWindows" @bind:after="OnStartupToggled" />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- Instant Save Card -->
+            <div class="claude-card setting-row" style="background-color: var(--bg-secondary);">
+                <div>
+                    <button class="claude-btn-primary" @onclick="SaveAndApply">
+                        💾 @(IsArabic ? "حفظ وتطبيق الإعدادات فوراً" : "Save & Apply Instantly")
+                    </button>
+                </div>
+                @if (ShowSaveToast)
+                {
+                    <div class="save-toast">
+                        ✅ @(IsArabic ? "تم الحفظ والتطبيق بنجاح!" : "Saved & applied successfully!")
+                    </div>
+                }
+            </div>
+        }
+        else if (ActiveTab == 2)
+        {
+            <!-- ==========================================
+                 TAB 2: KEYBOARD SHORTCUTS & RECORDER
+                 ========================================== -->
+            <div class="section-header">
+                <h2 class="serif-heading section-title">@(IsArabic ? "إدارة اختصارات الكيبورد" : "Keyboard Shortcuts")</h2>
+                <p class="section-subtitle">@(IsArabic ? "تخصيص المفاتيح التي تقوم بتحويل وشقلبة النص في أي مكان" : "Manage active hotkeys or record new custom keyboard combinations")</p>
+            </div>
+
+            <!-- Active Hotkeys List Card -->
+            <div class="claude-card">
+                <h3 class="serif-heading" style="font-size: 16px; margin: 0 0 16px 0;">
+                    ⌨️ @(IsArabic ? "الاختصارات النشطة حالياً:" : "Currently Active Shortcuts:")
+                </h3>
+
+                @foreach (var hk in Settings.Hotkeys)
+                {
+                    <div class="hotkey-item">
+                        <span class="hotkey-badge">@hk.DisplayName</span>
+                        
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <label class="claude-toggle">
+                                <input type="checkbox" @bind="hk.IsEnabled" @bind:after="OnHotkeysChanged" />
+                                <span class="toggle-slider"></span>
+                            </label>
+
+                            <button class="claude-btn-danger" @onclick="() => DeleteHotkey(hk)">
+                                @(IsArabic ? "حذف" : "Delete")
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Dedicated Keyboard-Only Recorder Box -->
+            <div class="claude-card">
+                <h3 class="serif-heading" style="font-size: 16px; margin: 0 0 6px 0;">
+                    ⌨️ @(IsArabic ? "مسجل اختصارات الكيبورد التفاعلي" : "Interactive Keyboard Recorder")
+                </h3>
+                <p class="setting-desc" style="margin-bottom: 16px;">
+                    @(IsArabic
+                        ? "اضغط الصندوق بالماوس، ثم اضغط تركيبة المفاتيح بالكيبورد (مثل Alt+Q أو Ctrl+Shift+Z):"
+                        : "Click below, then press your desired keyboard hotkey (e.g. Alt+Q or Ctrl+Shift+Z):")
+                </p>
+
+                <div class="recorder-box @(IsListeningForKeys ? "listening" : "")" 
+                     tabindex="0" 
+                     @onclick="StartListening" 
+                     @onkeydown="HandleKeyDown">
+                    <span class="recorder-prompt">
+                        @if (IsListeningForKeys)
+                        {
+                            <span>⏳ @(IsArabic ? "جاري الاستماع... اضغط مفاتيح الكيبورد الآن!" : "Listening... Press keys on keyboard now!")</span>
+                        }
+                        else
+                        {
+                            <span>⌨️ @(IsArabic ? "اضغط هنا لتسجيل اختصار كيبورد جديد..." : "Click here to record a new keyboard shortcut...")</span>
+                        }
+                    </span>
+                </div>
+            </div>
+        }
+        else if (ActiveTab == 3)
+        {
+            <!-- ==========================================
+                 TAB 3: ABOUT & PROJECT SPECS
+                 ========================================== -->
+            <div class="section-header">
+                <h2 class="serif-heading section-title">@(IsArabic ? "عن أداة مُنقِذ" : "About Munqith")</h2>
+                <p class="section-subtitle">@(IsArabic ? "معلومات الأداة والتقنية المستخدمة" : "Application details and open-source repository")</p>
+            </div>
+
+            <div class="claude-card">
+                <h3 class="serif-heading" style="font-size: 22px; color: var(--terracotta); margin: 0 0 12px 0;">
+                    🛡️ مُنقِذ — Munqith v1.0.0
+                </h3>
+                <p style="font-size: 14.5px; line-height: 1.6; margin: 0 0 16px 0;">
+                    @(IsArabic
+                        ? "أداة ويندوز ذكية وفائقة السرعة تعمل في الخلفية لتصحيح لغة الكتابة تلقائياً في كافة البرامج والمتصفحات بضغطة اختصار واحدة، دون الحاجة لإعادة كتابة النص من جديد."
+                        : "Fast, lightweight Windows utility running in the background to instantly auto-correct mistyped keyboard layouts across all Windows apps and browsers with a single hotkey.")
+                </p>
+
+                <div style="background-color: var(--bg-secondary); padding: 14px 18px; border-radius: var(--radius-md); font-size: 13.5px; line-height: 1.8; margin-bottom: 20px;">
+                    <div>• <strong>@(IsArabic ? "نظام التشغيل:" : "OS:")</strong> Windows 10 / Windows 11 (64-bit)</div>
+                    <div>• <strong>@(IsArabic ? "التقنية:" : "Tech Stack:")</strong> C# .NET 8.0 (LTS) & Blazor Hybrid</div>
+                    <div>• <strong>@(IsArabic ? "محرك الاستجابة:" : "Latency:")</strong> Win32 Low-Level Hook + Native Clipboard (&lt;30ms)</div>
+                </div>
+
+                <a href="https://github.com" target="_blank" class="claude-btn-primary" style="text-decoration: none;">
+                    🌐 GitHub Repository
+                </a>
+            </div>
+        }
+
+    </main>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnHotkeysUpdated { get; set; }
+
+    private AppSettings Settings => SettingsService.Settings;
+
+    private int ActiveTab = 0;
+    private bool IsDarkMode;
+    private bool IsArabic;
+    private string PlaygroundText = "hgf,hfm ,hpim";
+    private bool ShowSaveToast = false;
+    private bool IsListeningForKeys = false;
+
+    protected override void OnInitialized()
+    {
+        IsDarkMode = Settings.DarkMode;
+        IsArabic = Settings.Language == "ar";
+    }
+
+    private void SetTab(int tabIndex)
+    {
+        ActiveTab = tabIndex;
+        IsListeningForKeys = false;
+    }
+
+    private void ToggleTheme()
+    {
+        IsDarkMode = !IsDarkMode;
+        Settings.DarkMode = IsDarkMode;
+        SettingsService.Save();
+    }
+
+    private void ToggleLanguage()
+    {
+        IsArabic = !IsArabic;
+        Settings.Language = IsArabic ? "ar" : "en";
+        SettingsService.Save();
+    }
+
+    private void OnSettingChanged()
+    {
+        SettingsService.Save();
+    }
+
+    private void OnStartupToggled()
+    {
+        StartupService.SetStartup(Settings.StartWithWindows);
+        SettingsService.Save();
+    }
+
+    private void OnHotkeysChanged()
+    {
+        SettingsService.Save();
+        OnHotkeysUpdated.InvokeAsync();
+    }
+
+    private void DeleteHotkey(HotkeyBinding hk)
+    {
+        Settings.Hotkeys.Remove(hk);
+        SettingsService.Save();
+        OnHotkeysUpdated.InvokeAsync();
+    }
+
+    private void TestConversion()
+    {
+        if (!string.IsNullOrEmpty(PlaygroundText))
+        {
+            string converted = LayoutConverter.Convert(PlaygroundText, KeyboardLayout.WindowsArabicPC);
+            PlaygroundText = converted;
+
+            var res = new ConversionResult
+            {
+                WasConverted = true,
+                CharacterCount = converted.Length,
+                WordCount = converted.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length
+            };
+            StatsService.RecordConversion(res);
+        }
+    }
+
+    private async Task SaveAndApply()
+    {
+        SettingsService.Save();
+        await OnHotkeysUpdated.InvokeAsync();
+
+        ShowSaveToast = true;
+        StateHasChanged();
+
+        await Task.Delay(2500);
+        ShowSaveToast = false;
+        StateHasChanged();
+    }
+
+    private void StartListening()
+    {
+        IsListeningForKeys = true;
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (!IsListeningForKeys) return;
+
+        // Ignore solo modifier keys or system tabs
+        if (e.Key is "Control" or "Shift" or "Alt" or "Meta" or "Tab")
+        {
+            return;
+        }
+
+        int mods = 0;
+        if (e.AltKey) mods |= 1;
+        if (e.CtrlKey) mods |= 2;
+        if (e.ShiftKey) mods |= 4;
+
+        // Map key string to virtual key code or uppercase letter
+        int vk = (int)char.ToUpperInvariant(e.Key[0]);
+        if (e.Code.StartsWith("Key"))
+        {
+            vk = (int)e.Code[3]; // 'Q' from "KeyQ"
+        }
+
+        var newBinding = new HotkeyBinding
+        {
+            ModifierKeysValue = mods,
+            KeyValue = vk,
+            IsEnabled = true
+        };
+
+        Settings.Hotkeys.Add(newBinding);
+        SettingsService.Save();
+        OnHotkeysUpdated.InvokeAsync();
+
+        IsListeningForKeys = false;
+    }
+}
