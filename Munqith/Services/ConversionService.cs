@@ -20,8 +20,6 @@ namespace Munqith.Services
 
         public async Task PerformConversion()
         {
-            if (!_settingsService.Settings.IsEnabled) return;
-
             lock (_lockObj)
             {
                 if (_isConverting) return;
@@ -35,8 +33,8 @@ namespace Munqith.Services
                 // 1. Release physical keys
                 TextSelectionHelper.ReleaseModifiers();
 
-                // 2. Capture text based on configured mode (Selected Text / Line / Word)
-                string? text = await TextSelectionHelper.GetTextForConversion(settings.ConversionMode);
+                // 2. Capture text
+                string? text = await TextSelectionHelper.GetTextForConversion();
 
                 if (string.IsNullOrWhiteSpace(text)) return;
 
@@ -44,11 +42,11 @@ namespace Munqith.Services
                 string converted;
                 if (settings.SmartDetectionEnabled)
                 {
-                    converted = SmartDetector.SmartConvert(text, settings.SelectedLayout);
+                    converted = SmartDetector.SmartConvert(text, KeyboardLayout.WindowsArabicPC);
                 }
                 else
                 {
-                    converted = LayoutConverter.Convert(text, settings.SelectedLayout);
+                    converted = LayoutConverter.Convert(text, KeyboardLayout.WindowsArabicPC);
                 }
 
                 // If conversion produces no change, ignore

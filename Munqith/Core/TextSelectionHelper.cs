@@ -1,5 +1,4 @@
 using Munqith.Hooks;
-using Munqith.Models;
 
 namespace Munqith.Core
 {
@@ -86,60 +85,25 @@ namespace Munqith.Core
             return await TryCopyCurrentSelection();
         }
 
-        public static async Task<string?> TrySelectAndCopyAll()
-        {
-            NativeClipboard.Clear();
-            ReleaseModifiers();
-            await Task.Delay(MICRO_DELAY_MS);
-
-            // Press Ctrl + A
-            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, 0, UIntPtr.Zero);
-            NativeMethods.keybd_event(NativeMethods.VK_A_B, 0, 0, UIntPtr.Zero);
-            await Task.Delay(MICRO_DELAY_MS);
-            NativeMethods.keybd_event(NativeMethods.VK_A_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
-            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
-            await Task.Delay(MICRO_DELAY_MS);
-
-            return await TryCopyCurrentSelection();
-        }
-
         /// <summary>
-        /// Captures text based on conversion mode with intelligent empty clipboard detection.
+        /// Gets text for conversion: uses mouse selection, with automatic fallback if unselected.
         /// </summary>
-        public static async Task<string?> GetTextForConversion(ConversionMode mode)
+        public static async Task<string?> GetTextForConversion()
         {
-            switch (mode)
+            // 1. Try copying selected text first
+            string? text = await TryCopyCurrentSelection();
+
+            // 2. If no text was highlighted, fallback to line then last word
+            if (string.IsNullOrWhiteSpace(text))
             {
-                case ConversionMode.SelectedText:
-                    // 1. Try copying selected text
-                    string? text = await TryCopyCurrentSelection();
-                    // 2. If nothing was selected, fallback to line then word
-                    if (string.IsNullOrWhiteSpace(text))
-                    {
-                        text = await TrySelectAndCopyLine();
-                    }
-                    if (string.IsNullOrWhiteSpace(text))
-                    {
-                        text = await TrySelectAndCopyLastWord();
-                    }
-                    return text;
-
-                case ConversionMode.AllText:
-                    // Current line mode
-                    string? lineText = await TrySelectAndCopyLine();
-                    if (string.IsNullOrWhiteSpace(lineText))
-                    {
-                        lineText = await TrySelectAndCopyAll();
-                    }
-                    return lineText;
-
-                case ConversionMode.LastWord:
-                    // Last word mode
-                    return await TrySelectAndCopyLastWord();
-
-                default:
-                    return await TryCopyCurrentSelection();
+                text = await TrySelectAndCopyLine();
             }
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                text = await TrySelectAndCopyLastWord();
+            }
+
+            return text;
         }
     }
 }

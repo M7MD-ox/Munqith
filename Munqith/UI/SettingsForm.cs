@@ -23,9 +23,7 @@ namespace Munqith.UI
         private Color _textPrimary;
         private Color _textSecondary;
         private Color _navItemActive;
-        private Color _navItemHover;
         private readonly Color _accentColor = Color.FromArgb(59, 130, 246);      // Electric Modern Blue
-        private readonly Color _accentGlow = Color.FromArgb(37, 99, 235);
         private readonly Color _emeraldGreen = Color.FromArgb(16, 185, 129);     // Vibrant Success Green
         private readonly Color _roseRed = Color.FromArgb(239, 68, 68);           // Clean Red
 
@@ -60,12 +58,12 @@ namespace Munqith.UI
         private void InitializeForm()
         {
             this.Text = _isArabic ? "مُنقِذ — Munqith" : "Munqith";
-            this.ClientSize = new Size(760, 710);
+            this.ClientSize = new Size(760, 680);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.RightToLeft = _isArabic ? RightToLeft.Yes : RightToLeft.No;
-            this.RightToLeftLayout = false; // Strictly control pixel layout for perfect RTL/LTR mirroring
+            this.RightToLeftLayout = false;
             this.Font = new Font("Segoe UI", 9.5f);
 
             UpdateThemeTokens();
@@ -83,7 +81,6 @@ namespace Munqith.UI
                 _textPrimary = Color.FromArgb(248, 250, 252);    // Crisp Pure Text
                 _textSecondary = Color.FromArgb(148, 163, 184);  // Slate Muted
                 _navItemActive = Color.FromArgb(37, 43, 58);
-                _navItemHover = Color.FromArgb(32, 37, 50);
             }
             else
             {
@@ -94,7 +91,6 @@ namespace Munqith.UI
                 _textPrimary = Color.FromArgb(15, 23, 42);        // Deep Slate Text
                 _textSecondary = Color.FromArgb(100, 116, 139);   // Slate 500 Muted
                 _navItemActive = Color.FromArgb(238, 242, 255);   // Indigo Light Active
-                _navItemHover = Color.FromArgb(241, 245, 249);
             }
         }
 
@@ -109,7 +105,6 @@ namespace Munqith.UI
 
             if (_isArabic)
             {
-                // Arabic RTL: Sidebar on Far Right (X = contentWidth), Content on Left (X = 0)
                 _sidebarPanel = new Panel
                 {
                     Location = new Point(contentWidth, 0),
@@ -129,7 +124,6 @@ namespace Munqith.UI
             }
             else
             {
-                // English LTR: Sidebar on Left (X = 0), Content on Right (X = sidebarWidth)
                 _sidebarPanel = new Panel
                 {
                     Location = new Point(0, 0),
@@ -348,7 +342,6 @@ namespace Munqith.UI
 
             if (_isArabic)
             {
-                // Arabic layout
                 _heroCharsLabel = AddMiniStatTile(heroCard, cardWidth - 18 - cardW, yMetrics, cardW, cardH,
                     _statsService.TotalCharacters.ToString("N0"), "حرف تم تصحيحه");
 
@@ -361,7 +354,6 @@ namespace Munqith.UI
             }
             else
             {
-                // English layout
                 _heroCharsLabel = AddMiniStatTile(heroCard, 18, yMetrics, cardW, cardH,
                     _statsService.TotalCharacters.ToString("N0"), "Chars Corrected");
 
@@ -485,7 +477,7 @@ namespace Munqith.UI
         }
 
         // ==========================================
-        // 2. SETTINGS & CONVERSION MODES
+        // 2. SETTINGS CARDS
         // ==========================================
         private void BuildSettingsCardsView(Panel container)
         {
@@ -493,105 +485,13 @@ namespace Munqith.UI
             int cardWidth = 515;
 
             AddPageHeader(container, ref yPos,
-                _isArabic ? "خيارات وطرق التحويل" : "Conversion Scope & Settings",
-                _isArabic ? "اختر طريقة استجابة الأداة عند ضغط الاختصار وسلوك التشغيل" : "Choose how Munqith captures text when shortcut is pressed and set options");
+                _isArabic ? "إعدادات الأداة والنظام" : "General Settings & Options",
+                _isArabic ? "تخصيص سلوك التحويل التلقائي والتشغيل في الخلفية" : "Configure smart word detection and startup options");
 
-            // Mode Selector Card with Detailed Explanations
-            var modeCard = CreateCard(yPos, cardWidth, 120);
-
-            var modeTitle = new Label
-            {
-                Text = _isArabic ? "🎯  طريقة ووضع تحويل النصوص:" : "🎯  Text Conversion Scope Mode:",
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = _textPrimary,
-                AutoSize = true,
-                Location = new Point(_isArabic ? cardWidth - 240 : 16, 12)
-            };
-            modeCard.Controls.Add(modeTitle);
-
-            var modeCombo = new ComboBox
-            {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 9.5f),
-                Size = new Size(320, 30),
-                Location = new Point(_isArabic ? cardWidth - 336 : 16, 38),
-                BackColor = _isDark ? Color.FromArgb(42, 48, 62) : Color.White,
-                ForeColor = _textPrimary,
-                FlatStyle = FlatStyle.Flat
-            };
-
-            var modeItems = _isArabic
-                ? new[]
-                {
-                    "1. الوضع التلقائي الذكي (تحديد بالماوس أو السطر الحالي)",
-                    "2. النص المحدد فقط (تظليل بالماوس)",
-                    "3. آخر كلمة فقط (السابقة للمؤشر مباشرة)"
-                }
-                : new[]
-                {
-                    "1. Smart Auto-Select (Selection or Current Line)",
-                    "2. Selected Text Only (Mouse Highlight)",
-                    "3. Last Word Only (Word before cursor)"
-                };
-
-            modeCombo.Items.AddRange(modeItems);
-
-            // Map current index
-            int currentIdx = (int)_settingsService.Settings.ConversionMode;
-            if (currentIdx == 0) modeCombo.SelectedIndex = 0; // AllText/Smart
-            else if (currentIdx == 1) modeCombo.SelectedIndex = 1;
-            else modeCombo.SelectedIndex = 2;
-
-            var modeDescLbl = new Label
-            {
-                Font = new Font("Segoe UI", 8.2f),
-                ForeColor = _textSecondary,
-                AutoSize = true,
-                Location = new Point(_isArabic ? cardWidth - 480 : 16, 78)
-            };
-
-            Action updateModeDesc = () =>
-            {
-                if (modeCombo.SelectedIndex == 0)
-                {
-                    modeDescLbl.Text = _isArabic
-                        ? "💡 الشرح: لو مظلل نص بالماوس هيحوله، ولو مش مظلل هيحول آخر سطر/جملة كتبتها تلقائياً."
-                        : "💡 Explanation: Converts highlighted text if selected; otherwise converts the whole current line.";
-                }
-                else if (modeCombo.SelectedIndex == 1)
-                {
-                    modeDescLbl.Text = _isArabic
-                        ? "💡 الشرح: يحول فقط الكلام اللي بتحدده بالماوس، ولن يلمس أي نص إذا لم تقم بتحديده."
-                        : "💡 Explanation: Only converts text when you explicitly highlight it with your mouse.";
-                }
-                else
-                {
-                    modeDescLbl.Text = _isArabic
-                        ? "💡 الشرح: يحول فقط الكلمة الأخيرة المتصلة بالمؤشر دون المساس بباقي الجملة."
-                        : "💡 Explanation: Only converts the single word immediately before the text cursor.";
-                }
-            };
-            updateModeDesc();
-
-            modeCombo.SelectedIndexChanged += (s, e) =>
-            {
-                if (modeCombo.SelectedIndex == 0) _settingsService.Settings.ConversionMode = ConversionMode.SelectedText;
-                else if (modeCombo.SelectedIndex == 1) _settingsService.Settings.ConversionMode = ConversionMode.AllText;
-                else _settingsService.Settings.ConversionMode = ConversionMode.LastWord;
-
-                _settingsService.Save();
-                updateModeDesc();
-            };
-
-            modeCard.Controls.Add(modeCombo);
-            modeCard.Controls.Add(modeDescLbl);
-            container.Controls.Add(modeCard);
-            yPos += 132;
-
-            // Smart Detection Toggle Card
+            // Smart Detection Toggle Card (Default ENABLED)
             yPos = AddToggleCard(container, yPos, cardWidth,
-                _isArabic ? "🧠  الكشف الذكي للكلمات (Smart Vocabulary)" : "🧠  Smart Vocabulary Detection",
-                _isArabic ? "يحافظ على الكلمات الإنجليزية الصحيحة تلقائياً ويصحح فقط الكلمات غير المفهومة" : "Preserves real English words and only flips actual typing mistakes",
+                _isArabic ? "🧠  الكشف الذكي للكلمات (Smart Vocabulary) [مفعّل افتراضياً]" : "🧠  Smart Vocabulary Detection [Default Enabled]",
+                _isArabic ? "يحافظ على الكلمات الإنجليزية الصحيحة تلقائياً ويصحح فقط أخطاء الكتابة" : "Preserves real English words and only flips actual typing mistakes",
                 _settingsService.Settings.SmartDetectionEnabled,
                 val =>
                 {

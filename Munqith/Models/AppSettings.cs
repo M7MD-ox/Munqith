@@ -5,27 +5,8 @@ namespace Munqith.Models
 {
     public class AppSettings
     {
-        public int SelectedLayoutInt { get; set; } = 0;
-
-        [JsonIgnore]
-        public KeyboardLayout SelectedLayout
-        {
-            get => (KeyboardLayout)SelectedLayoutInt;
-            set => SelectedLayoutInt = (int)value;
-        }
-
-        public int ConversionModeInt { get; set; } = 0;
-
-        [JsonIgnore]
-        public ConversionMode ConversionMode
-        {
-            get => (ConversionMode)ConversionModeInt;
-            set => ConversionModeInt = (int)value;
-        }
-
-        public bool SmartDetectionEnabled { get; set; } = false;
+        public bool SmartDetectionEnabled { get; set; } = true; // Enabled by default as requested!
         public bool StartWithWindows { get; set; } = true;
-        public bool IsEnabled { get; set; } = true;
         public bool DarkMode { get; set; } = false;
         public string Language { get; set; } = "ar";
 
@@ -40,13 +21,6 @@ namespace Munqith.Models
         public int TotalCharactersConverted { get; set; } = 0;
         public int TotalWordsConverted { get; set; } = 0;
         public double TotalTimeSavedSeconds { get; set; } = 0;
-    }
-
-    public enum ConversionMode
-    {
-        SelectedText = 0,
-        AllText = 1,
-        LastWord = 2
     }
 
     public class HotkeyBinding
