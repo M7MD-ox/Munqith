@@ -68,7 +68,7 @@ namespace Munqith.UI
                 ShowImageMargin = false,
                 ShowCheckMargin = false,
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Regular),
-                Padding = new Padding(6),
+                Padding = new Padding(4),
                 DropShadowEnabled = true
             };
 
@@ -87,25 +87,7 @@ namespace Munqith.UI
 
             menu.Items.Add(new CustomMenuSeparator(isDark));
 
-            // 2. Active Mode status
-            var statusItem = new ToolStripMenuItem(isAr ? "🟢  الوضع الذكي نشط وجاهز" : "🟢  Smart In-Place Mode Active", null, (s, e) => ShowSettings())
-            {
-                Padding = new Padding(8, 5, 8, 5)
-            };
-            menu.Items.Add(statusItem);
-
-            menu.Items.Add(new CustomMenuSeparator(isDark));
-
-            // 3. About
-            var aboutItem = new ToolStripMenuItem(isAr ? "ℹ️  عن أداة مُنقِذ" : "ℹ️  About Munqith", null, (s, e) => ShowSettings())
-            {
-                Padding = new Padding(8, 5, 8, 5)
-            };
-            menu.Items.Add(aboutItem);
-
-            menu.Items.Add(new CustomMenuSeparator(isDark));
-
-            // 4. Exit
+            // 2. Exit
             var exitItem = new ToolStripMenuItem(isAr ? "❌  إغلاق البرنامج" : "❌  Exit Munqith", null, (s, e) => ExitApplication())
             {
                 Padding = new Padding(8, 6, 8, 6)
@@ -222,7 +204,6 @@ namespace Munqith.UI
                 var rect = new Rectangle(4, 2, e.Item.Width - 8, e.Item.Height - 4);
                 using var path = CreateRoundedPath(rect, 6);
                 using var brush = new SolidBrush(_hoverBg);
-                using var pen = new Pen(Color.FromArgb(240, 213, 203), 1f);
 
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 e.Graphics.FillPath(brush, path);

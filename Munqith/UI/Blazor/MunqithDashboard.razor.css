@@ -369,29 +369,8 @@
     background-color: var(--bg-secondary);
 }
 
-.claude-btn-danger {
-    background-color: var(--rose-bg);
-    color: var(--rose);
-    border: 1px solid #F5C6CB;
-    padding: 6px 12px;
-    border-radius: var(--radius-sm);
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-family: inherit;
-}
-
-.claude-btn-danger:hover {
-    background-color: var(--rose);
-    color: #FFFFFF;
-}
-
 /* ==========================================================================
-   STABLE CLAUDE TOGGLE SWITCH (Fixed for RTL and LTR)
+   PERFECT TOGGLE SWITCH (Guaranteed 100% stable in Arabic RTL & English LTR)
    ========================================================================== */
 .claude-toggle {
     position: relative;
@@ -399,8 +378,9 @@
     width: 48px;
     height: 26px;
     cursor: pointer;
-    direction: ltr !important; /* Force physical LTR geometry so RTL does not flip thumb outside */
+    direction: ltr !important; /* Always physical LTR coordinate system */
     flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .claude-toggle input {
@@ -420,6 +400,7 @@
     border-radius: var(--radius-pill);
     transition: var(--transition);
     border: 1px solid var(--border-hover);
+    box-sizing: border-box;
 }
 
 .toggle-slider:before {
@@ -432,7 +413,8 @@
     background-color: #FFFFFF;
     border-radius: 50%;
     transition: var(--transition);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
 }
 
 .claude-toggle input:checked + .toggle-slider {
@@ -441,7 +423,7 @@
 }
 
 .claude-toggle input:checked + .toggle-slider:before {
-    transform: translateX(22px);
+    transform: translateX(22px) !important;
 }
 
 /* Hotkey Item */
@@ -467,38 +449,6 @@
     font-size: 14px;
     padding: 6px 12px;
     border-radius: var(--radius-sm);
-}
-
-/* Interactive Recorder Box */
-.recorder-box {
-    border: 2px dashed var(--border-hover);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    text-align: center;
-    cursor: pointer;
-    background-color: var(--bg-secondary);
-    transition: var(--transition);
-}
-
-.recorder-box:hover {
-    border-color: var(--terracotta);
-    background-color: var(--terracotta-light);
-}
-
-.recorder-box.listening {
-    border-color: var(--terracotta);
-    background-color: #FEF3C7;
-    border-style: solid;
-}
-
-.recorder-prompt {
-    font-size: 14.5px;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
 }
 
 /* Toast Badge */
