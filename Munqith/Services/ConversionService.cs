@@ -1,21 +1,36 @@
 using Munqith.Core;
+using Munqith.Interop;
 using Munqith.Models;
 
 namespace Munqith.Services
 {
-    public class ConversionService
+    public class ConversionService : IConversionService
     {
-        private readonly SettingsService _settingsService;
-        private readonly StatsService _statsService;
+        private readonly ISettingsService _settingsService;
+        private readonly IStatsService _statsService;
+        private readonly ILayoutConverter _layoutConverter;
+        private readonly ISmartDetector _smartDetector;
+        private readonly ITextSelectionService _textSelectionService;
+        private readonly INativeClipboard _clipboard;
 
         // Anti-reentrancy debounce lock
         private static bool _isConverting = false;
         private static readonly object _lockObj = new();
 
-        public ConversionService(SettingsService settingsService, StatsService statsService)
+        public ConversionService(
+            ISettingsService settingsService,
+            IStatsService statsService,
+            ILayoutConverter? layoutConverter = null,
+            ISmartDetector? smartDetector = null,
+            ITextSelectionService? textSelectionService = null,
+            INativeClipboard? clipboard = null)
         {
             _settingsService = settingsService;
             _statsService = statsService;
+            _layoutConverter = layoutConverter ?? LayoutConverter.Instance;
+            _smartDetector = smartDetector ?? SmartDetector.Instance;
+            _textSelectionService = textSelectionService ?? new TextSelectionService();
+            _clipboard = clipboard ?? new NativeClipboard();
         }
 
         public async Task PerformConversion()
@@ -31,10 +46,10 @@ namespace Munqith.Services
                 var settings = _settingsService.Settings;
 
                 // 1. Release physical keys
-                TextSelectionHelper.ReleaseModifiers();
+                _textSelectionService.ReleaseModifiers();
 
                 // 2. Capture text
-                string? text = await TextSelectionHelper.GetTextForConversion();
+                string? text = await _textSelectionService.GetTextForConversion();
 
                 if (string.IsNullOrWhiteSpace(text)) return;
 
@@ -42,21 +57,21 @@ namespace Munqith.Services
                 string converted;
                 if (settings.SmartDetectionEnabled)
                 {
-                    converted = SmartDetector.SmartConvert(text, KeyboardLayout.WindowsArabicPC);
+                    converted = _smartDetector.SmartConvert(text, KeyboardLayout.WindowsArabicPC);
                 }
                 else
                 {
-                    converted = LayoutConverter.Convert(text, KeyboardLayout.WindowsArabicPC);
+                    converted = _layoutConverter.Convert(text, KeyboardLayout.WindowsArabicPC);
                 }
 
                 // If conversion produces no change, ignore
                 if (converted == text) return;
 
                 // 4. Place converted text directly on clipboard
-                NativeClipboard.SetText(converted);
+                _clipboard.SetText(converted);
 
                 // 5. Paste directly into active window in place
-                await TextSelectionHelper.SimulatePaste();
+                await _textSelectionService.SimulatePaste();
 
                 // 6. Record stats
                 var result = new ConversionResult
@@ -66,7 +81,7 @@ namespace Munqith.Services
                     WasConverted = true,
                     CharacterCount = converted.Length,
                     WordCount = converted.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length,
-                    DetectedAsArabic = !LayoutConverter.IsEnglishText(text)
+                    DetectedAsArabic = !_layoutConverter.IsEnglishText(text)
                 };
                 _statsService.RecordConversion(result);
             }

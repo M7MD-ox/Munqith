@@ -3,7 +3,7 @@ using Munqith.Models;
 
 namespace Munqith.Services
 {
-    public class SettingsService
+    public class SettingsService : ISettingsService
     {
         private static readonly string SettingsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Munqith");
@@ -11,6 +11,11 @@ namespace Munqith.Services
         private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
         public AppSettings Settings { get; private set; } = new();
+
+        public SettingsService()
+        {
+            Load();
+        }
 
         public void Load()
         {
@@ -22,7 +27,10 @@ namespace Munqith.Services
                     Settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
                 }
             }
-            catch { Settings = new AppSettings(); }
+            catch
+            {
+                Settings = new AppSettings();
+            }
         }
 
         public void Save()

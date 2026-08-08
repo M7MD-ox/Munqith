@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace Munqith.Core
 {
     public enum KeyboardLayout
@@ -8,10 +10,13 @@ namespace Munqith.Core
 
     public static class KeyboardMaps
     {
-        public static readonly Dictionary<char, char> EnglishToWindowsArabic;
-        public static readonly Dictionary<char, char> WindowsArabicToEnglish;
-        public static readonly Dictionary<char, char> EnglishToMacArabic;
-        public static readonly Dictionary<char, char> MacArabicToEnglish;
+        public static readonly ReadOnlyDictionary<char, char> EnglishToWindowsArabic;
+        public static readonly ReadOnlyDictionary<char, char> WindowsArabicToEnglish;
+        public static readonly ReadOnlyDictionary<char, char> EnglishToMacArabic;
+        public static readonly ReadOnlyDictionary<char, char> MacArabicToEnglish;
+
+        public static readonly ReadOnlyDictionary<char, string> EnToArMulti;
+        public static readonly ReadOnlyDictionary<string, char> ArToEnMulti;
 
         static KeyboardMaps()
         {
@@ -44,7 +49,6 @@ namespace Munqith.Core
                 { 'x', '\u0621' }, // ء
                 { 'c', '\u0624' }, // ؤ
                 { 'v', '\u0631' }, // ر
-                // 'b' → لا (2 chars, handled in LayoutConverter)
                 { 'n', '\u0649' }, // ى
                 { 'm', '\u0629' }, // ة
 
@@ -53,7 +57,6 @@ namespace Munqith.Core
                 { 'W', '\u064B' }, // ً tanween fatha
                 { 'E', '\u064F' }, // ُ damma
                 { 'R', '\u064C' }, // ٌ tanween damma
-                // 'T' → لإ (2 chars, handled in LayoutConverter)
                 { 'Y', '\u0625' }, // إ
                 { 'U', '\u2018' }, // ' left single quote
                 { 'I', '\u00F7' }, // ÷
@@ -64,7 +67,6 @@ namespace Munqith.Core
                 { 'S', '\u064D' }, // ٍ tanween kasra
                 { 'D', ']' },
                 { 'F', '[' },
-                // 'G' → لأ (2 chars, handled in LayoutConverter)
                 { 'H', '\u0623' }, // أ
                 { 'J', '\u0640' }, // ـ tatweel
                 { 'K', '\u060C' }, // ، Arabic comma
@@ -74,7 +76,6 @@ namespace Munqith.Core
                 { 'X', '\u0652' }, // ْ sukun
                 { 'C', '}' },
                 { 'V', '{' },
-                // 'B' → لآ (2 chars, handled in LayoutConverter)
                 { 'N', '\u0622' }, // آ
                 { 'M', '\u2019' }, // ' right single quote
 
@@ -97,60 +98,44 @@ namespace Munqith.Core
                 { '}', '>' },
             };
 
-            EnglishToWindowsArabic = enToArWin;
+            EnglishToWindowsArabic = new ReadOnlyDictionary<char, char>(enToArWin);
 
-            // Build reverse map (Arabic → English)
-            WindowsArabicToEnglish = new Dictionary<char, char>();
+            var winArToEn = new Dictionary<char, char>();
             foreach (var kvp in enToArWin)
             {
-                if (!WindowsArabicToEnglish.ContainsKey(kvp.Value))
-                    WindowsArabicToEnglish[kvp.Value] = kvp.Key;
+                if (!winArToEn.ContainsKey(kvp.Value))
+                    winArToEn[kvp.Value] = kvp.Key;
             }
+            WindowsArabicToEnglish = new ReadOnlyDictionary<char, char>(winArToEn);
 
-            // === Mac Arabic Layout ===
-            // Mac Arabic is mostly the same for letter keys
-            // Key differences are in some special characters
-            var enToArMac = new Dictionary<char, char>
+            // Mac layout mappings
+            var enToArMac = new Dictionary<char, char>(enToArWin);
+            EnglishToMacArabic = new ReadOnlyDictionary<char, char>(enToArMac);
+
+            var macArToEn = new Dictionary<char, char>(winArToEn);
+            MacArabicToEnglish = new ReadOnlyDictionary<char, char>(macArToEn);
+
+            // Multi-character ligatures (لا, لإ, لأ, لآ)
+            var multiEnToAr = new Dictionary<char, string>
             {
-                // Letters are mostly the same as Windows Arabic PC
-                { 'q', '\u0636' }, { 'w', '\u0635' }, { 'e', '\u062B' }, { 'r', '\u0642' },
-                { 't', '\u0641' }, { 'y', '\u063A' }, { 'u', '\u0639' }, { 'i', '\u0647' },
-                { 'o', '\u062E' }, { 'p', '\u062D' },
-                { 'a', '\u0634' }, { 's', '\u0633' }, { 'd', '\u064A' }, { 'f', '\u0628' },
-                { 'g', '\u0644' }, { 'h', '\u0627' }, { 'j', '\u062A' }, { 'k', '\u0646' },
-                { 'l', '\u0645' },
-                { 'z', '\u0626' }, { 'x', '\u0621' }, { 'c', '\u0624' }, { 'v', '\u0631' },
-                { 'n', '\u0649' }, { 'm', '\u0629' },
-
-                // Shift letters
-                { 'Q', '\u064E' }, { 'W', '\u064B' }, { 'E', '\u064F' }, { 'R', '\u064C' },
-                { 'Y', '\u0625' },
-                { 'U', '\u2018' }, { 'I', '\u00F7' }, { 'O', '\u00D7' }, { 'P', '\u061B' },
-                { 'A', '\u0650' }, { 'S', '\u064D' },
-                { 'D', ']' }, { 'F', '[' },
-                { 'H', '\u0623' }, { 'J', '\u0640' }, { 'K', '\u060C' }, { 'L', '/' },
-                { 'Z', '~' }, { 'X', '\u0652' }, { 'C', '}' }, { 'V', '{' },
-                { 'N', '\u0622' }, { 'M', '\u2019' },
-
-                // Special characters
-                { '`', '\u0630' }, { ';', '\u0643' }, { '\'', '\u0637' },
-                { ',', '\u0648' }, { '.', '\u0632' }, { '/', '\u0638' },
-                { '[', '\u062C' }, { ']', '\u062F' },
-                { '~', '\u0651' }, { '<', ',' }, { '>', '.' },
-                { '?', '\u061F' }, { '{', '<' }, { '}', '>' },
+                { 'b', "\u0644\u0627" },   // لا
+                { 'T', "\u0644\u0625" },   // لإ
+                { 'G', "\u0644\u0623" },   // لأ
+                { 'B', "\u0644\u0622" },   // لآ
             };
+            EnToArMulti = new ReadOnlyDictionary<char, string>(multiEnToAr);
 
-            EnglishToMacArabic = enToArMac;
-
-            MacArabicToEnglish = new Dictionary<char, char>();
-            foreach (var kvp in enToArMac)
+            var multiArToEn = new Dictionary<string, char>
             {
-                if (!MacArabicToEnglish.ContainsKey(kvp.Value))
-                    MacArabicToEnglish[kvp.Value] = kvp.Key;
-            }
+                { "\u0644\u0627", 'b' },   // لا → b
+                { "\u0644\u0625", 'T' },   // لإ → T
+                { "\u0644\u0623", 'G' },   // لأ → G
+                { "\u0644\u0622", 'B' },   // لآ → B
+            };
+            ArToEnMulti = new ReadOnlyDictionary<string, char>(multiArToEn);
         }
 
-        public static Dictionary<char, char> GetMap(KeyboardLayout layout, bool toArabic)
+        public static IReadOnlyDictionary<char, char> GetMap(KeyboardLayout layout, bool toArabic)
         {
             return (layout, toArabic) switch
             {

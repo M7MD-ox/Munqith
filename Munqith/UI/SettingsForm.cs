@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components.WebView.WindowsForms;
-using Microsoft.Extensions.DependencyInjection;
 using Munqith.Services;
 
 namespace Munqith.UI
@@ -8,7 +7,7 @@ namespace Munqith.UI
     {
         private readonly BlazorWebView _blazorWebView;
 
-        public SettingsForm(SettingsService settingsService, StatsService statsService, TrayApplicationContext trayContext)
+        public SettingsForm(IServiceProvider serviceProvider)
         {
             this.Text = "مُنقِذ Munqith";
             this.ClientSize = new Size(780, 740);
@@ -27,17 +26,11 @@ namespace Munqith.UI
             }
             catch { }
 
-            var services = new ServiceCollection();
-            services.AddWindowsFormsBlazorWebView();
-            services.AddSingleton(settingsService);
-            services.AddSingleton(statsService);
-            services.AddSingleton(trayContext);
-
             _blazorWebView = new BlazorWebView
             {
                 Dock = DockStyle.Fill,
                 HostPage = "wwwroot/index.html",
-                Services = services.BuildServiceProvider()
+                Services = serviceProvider
             };
 
             _blazorWebView.RootComponents.Add<Munqith.UI.Blazor.MunqithDashboard>("#app");

@@ -2,11 +2,11 @@ using Munqith.Models;
 
 namespace Munqith.Services
 {
-    public class StatsService
+    public class StatsService : IStatsService
     {
-        private readonly SettingsService _settingsService;
+        private readonly ISettingsService _settingsService;
 
-        public StatsService(SettingsService settingsService)
+        public StatsService(ISettingsService settingsService)
         {
             _settingsService = settingsService;
         }

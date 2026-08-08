@@ -3,12 +3,12 @@ using System.Text.RegularExpressions;
 
 namespace Munqith.Core
 {
-    /// <summary>
-    /// Smart detection that preserves correctly-typed English words
-    /// and only converts garbled text.
-    /// </summary>
-    public static class SmartDetector
+    public class SmartDetector : ISmartDetector
     {
+        public static readonly SmartDetector Instance = new();
+
+        private readonly ILayoutConverter _layoutConverter;
+
         private static readonly HashSet<string> CommonEnglishWords = new(StringComparer.OrdinalIgnoreCase)
         {
             "the", "be", "to", "of", "and", "in", "that", "have", "it", "for",
@@ -79,14 +79,17 @@ namespace Munqith.Core
             "windows", "linux", "android", "apple", "microsoft", "chrome", "firefox"
         };
 
-        /// <summary>
-        /// Converts text smartly — preserving real English words and only converting garbled text.
-        /// </summary>
-        public static string SmartConvert(string text, KeyboardLayout layout)
+        public SmartDetector(ILayoutConverter? layoutConverter = null)
         {
-            // Split text preserving spaces and delimiters
+            _layoutConverter = layoutConverter ?? LayoutConverter.Instance;
+        }
+
+        public string SmartConvert(string text, KeyboardLayout layout)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+
             var parts = Regex.Split(text, @"(\s+)");
-            var result = new StringBuilder();
+            var result = new StringBuilder(text.Length);
 
             foreach (var part in parts)
             {
@@ -96,28 +99,23 @@ namespace Munqith.Core
                     continue;
                 }
 
-                // Strip punctuation for dictionary check
                 string cleaned = part.Trim(',', '.', '!', '?', ';', ':', '"', '\'', '(', ')', '[', ']', '{', '}');
 
                 if (IsLikelyEnglishWord(cleaned))
                 {
-                    result.Append(part); // Keep as-is
+                    result.Append(part);
                 }
                 else
                 {
-                    result.Append(LayoutConverter.Convert(part, layout));
+                    result.Append(_layoutConverter.Convert(part, layout));
                 }
             }
             return result.ToString();
         }
 
-        /// <summary>
-        /// Checks if a word is likely a real English word.
-        /// </summary>
-        private static bool IsLikelyEnglishWord(string word)
+        public bool IsLikelyEnglishWord(string word)
         {
             if (string.IsNullOrEmpty(word) || word.Length < 2) return false;
-            // Must be all ASCII letters
             if (!word.All(c => (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))) return false;
             return CommonEnglishWords.Contains(word);
         }

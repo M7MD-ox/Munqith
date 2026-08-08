@@ -2,12 +2,12 @@ using Microsoft.Win32;
 
 namespace Munqith.Services
 {
-    public static class StartupService
+    public class StartupService : IStartupService
     {
         private const string AppName = "Munqith";
         private const string RegistryPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
 
-        public static bool IsRegistered()
+        public bool IsRegistered()
         {
             try
             {
@@ -20,7 +20,7 @@ namespace Munqith.Services
             }
         }
 
-        public static void Register()
+        public void Register()
         {
             try
             {
@@ -34,7 +34,7 @@ namespace Munqith.Services
             catch { }
         }
 
-        public static void Unregister()
+        public void Unregister()
         {
             try
             {
@@ -44,7 +44,7 @@ namespace Munqith.Services
             catch { }
         }
 
-        public static void SetStartup(bool enabled)
+        public void SetStartup(bool enabled)
         {
             if (enabled) Register();
             else Unregister();

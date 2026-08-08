@@ -2,8 +2,9 @@
 @using Munqith.Core
 @using Munqith.Models
 @using Munqith.Services
-@inject SettingsService SettingsService
-@inject StatsService StatsService
+@inject ISettingsService SettingsService
+@inject IStatsService StatsService
+@inject ILayoutConverter LayoutConverter
 @inject Munqith.UI.TrayApplicationContext TrayContext
 
 <div class="munqith-container @(IsDarkMode ? "dark-theme" : "") @(IsArabic ? "rtl-mode" : "")">

@@ -1,5 +1,4 @@
 using System.Drawing.Drawing2D;
-using Munqith.Core;
 using Munqith.Hooks;
 using Munqith.Models;
 using Munqith.Services;
@@ -9,22 +8,25 @@ namespace Munqith.UI
     public class TrayApplicationContext : ApplicationContext
     {
         private readonly NotifyIcon _trayIcon;
-        private readonly SettingsService _settingsService;
-        private readonly StatsService _statsService;
-        private readonly ConversionService _conversionService;
-        private readonly LowLevelKeyboardHook _keyboardHook;
+        private readonly ISettingsService _settingsService;
+        private readonly IStatsService _statsService;
+        private readonly IConversionService _conversionService;
+        private readonly IKeyboardHook _keyboardHook;
+        private readonly IServiceProvider _serviceProvider;
         private SettingsForm? _settingsForm;
 
         public TrayApplicationContext(
-            SettingsService settingsService,
-            StatsService statsService,
-            ConversionService conversionService,
-            LowLevelKeyboardHook keyboardHook)
+            ISettingsService settingsService,
+            IStatsService statsService,
+            IConversionService conversionService,
+            IKeyboardHook keyboardHook,
+            IServiceProvider serviceProvider)
         {
             _settingsService = settingsService;
             _statsService = statsService;
             _conversionService = conversionService;
             _keyboardHook = keyboardHook;
+            _serviceProvider = serviceProvider;
 
             _trayIcon = new NotifyIcon();
             InitializeTrayIcon();
@@ -111,7 +113,7 @@ namespace Munqith.UI
         {
             if (_settingsForm == null || _settingsForm.IsDisposed)
             {
-                _settingsForm = new SettingsForm(_settingsService, _statsService, this);
+                _settingsForm = new SettingsForm(_serviceProvider);
             }
 
             _settingsForm.Show();
