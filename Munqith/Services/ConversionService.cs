@@ -24,14 +24,13 @@ namespace Munqith.Services
 
             try
             {
-                // Wait briefly for physical modifier keys to settle
+                // Release physical modifiers immediately
                 TextSelectionHelper.ReleaseModifiers();
-                await Task.Delay(50);
 
-                // Try configured conversion mode first
+                // Get text based on mode with fast fallback
                 string? text = await TextSelectionHelper.GetTextForConversion(settings.ConversionMode);
 
-                // Smart Fallback: If no text was selected, fallback to LastWord mode automatically
+                // Smart Fallback: If no text was selected, fallback to LastWord mode quickly
                 if (string.IsNullOrWhiteSpace(text) && settings.ConversionMode == ConversionMode.SelectedText)
                 {
                     text = await TextSelectionHelper.GetTextForConversion(ConversionMode.LastWord);
@@ -39,7 +38,7 @@ namespace Munqith.Services
 
                 if (string.IsNullOrWhiteSpace(text)) return;
 
-                // Check for Undo: if text matches last converted text, restore original
+                // Check for Undo
                 if (_lastConvertedText != null && text.Trim() == _lastConvertedText.Trim())
                 {
                     NativeClipboard.SetText(_lastOriginalText!);
@@ -67,11 +66,10 @@ namespace Munqith.Services
                 _lastOriginalText = text;
                 _lastConvertedText = converted;
 
-                // Set text directly into Windows clipboard with Native Win32 API
+                // Set text directly into Windows clipboard
                 NativeClipboard.SetText(converted);
-                await Task.Delay(30);
 
-                // Paste converted text into active window
+                // Paste converted text into active window immediately
                 await TextSelectionHelper.SimulatePaste();
 
                 // Record stats

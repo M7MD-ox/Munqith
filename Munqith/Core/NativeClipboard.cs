@@ -35,10 +35,9 @@ namespace Munqith.Core
         private static extern IntPtr GlobalFree(IntPtr hMem);
 
         /// <summary>
-        /// Reads Unicode text from Windows clipboard with automatic retry loop.
-        /// Completely avoids WinForms/WPF STA thread limitations and COMExceptions.
+        /// Reads Unicode text from Windows clipboard with ultra-fast immediate attempt (8ms interval retry).
         /// </summary>
-        public static string? GetText(int maxRetries = 10, int delayMs = 35)
+        public static string? GetText(int maxRetries = 6, int delayMs = 8)
         {
             for (int i = 0; i < maxRetries; i++)
             {
@@ -73,16 +72,19 @@ namespace Munqith.Core
                     }
                 }
 
-                Thread.Sleep(delayMs);
+                if (i < maxRetries - 1)
+                {
+                    Thread.Sleep(delayMs);
+                }
             }
 
             return null;
         }
 
         /// <summary>
-        /// Writes Unicode text directly to Windows clipboard with retry loop.
+        /// Writes Unicode text directly to Windows clipboard with ultra-fast execution.
         /// </summary>
-        public static bool SetText(string text, int maxRetries = 10, int delayMs = 35)
+        public static bool SetText(string text, int maxRetries = 5, int delayMs = 6)
         {
             if (string.IsNullOrEmpty(text)) return false;
 
@@ -108,7 +110,7 @@ namespace Munqith.Core
 
                                 if (SetClipboardData(CF_UNICODETEXT, hGlobal) != IntPtr.Zero)
                                 {
-                                    return true; // Successfully placed on clipboard
+                                    return true;
                                 }
                             }
 
@@ -121,7 +123,10 @@ namespace Munqith.Core
                     }
                 }
 
-                Thread.Sleep(delayMs);
+                if (i < maxRetries - 1)
+                {
+                    Thread.Sleep(delayMs);
+                }
             }
 
             return false;
