@@ -15,7 +15,7 @@ namespace Munqith.UI
         private bool _isDark;
         private bool _isArabic;
 
-        // Windows 11 Fluent Tokens
+        // Ultra-Modern Obsidian & Pearl Palette
         private Color _windowBg;
         private Color _sidebarBg;
         private Color _cardBg;
@@ -23,8 +23,11 @@ namespace Munqith.UI
         private Color _textPrimary;
         private Color _textSecondary;
         private Color _navItemActive;
-        private readonly Color _accentColor = Color.FromArgb(0, 120, 212);
-        private readonly Color _successColor = Color.FromArgb(46, 125, 50);
+        private Color _navItemHover;
+        private readonly Color _accentColor = Color.FromArgb(59, 130, 246);      // Electric Modern Blue
+        private readonly Color _accentGlow = Color.FromArgb(37, 99, 235);
+        private readonly Color _emeraldGreen = Color.FromArgb(16, 185, 129);     // Vibrant Success Green
+        private readonly Color _roseRed = Color.FromArgb(239, 68, 68);           // Clean Red
 
         private int _selectedNavIndex = 0; // 0: Stats, 1: Settings, 2: Hotkeys, 3: About
         private Panel _sidebarPanel = null!;
@@ -51,65 +54,68 @@ namespace Munqith.UI
             _isArabic = _settingsService.Settings.Language == "ar";
 
             InitializeForm();
-            BuildFluentUI();
+            BuildModernUI();
         }
 
         private void InitializeForm()
         {
-            this.Text = _isArabic ? "مُنقِذ — إعدادات ويندوز 11" : "Munqith — Windows 11 Settings";
-            this.ClientSize = new Size(740, 700);
+            this.Text = _isArabic ? "مُنقِذ — Munqith" : "Munqith";
+            this.ClientSize = new Size(760, 710);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.RightToLeft = _isArabic ? RightToLeft.Yes : RightToLeft.No;
-            this.RightToLeftLayout = false;
+            this.RightToLeftLayout = false; // Strictly control pixel layout for perfect RTL/LTR mirroring
             this.Font = new Font("Segoe UI", 9.5f);
 
-            UpdateFluentTokens();
+            UpdateThemeTokens();
             this.BackColor = _windowBg;
         }
 
-        private void UpdateFluentTokens()
+        private void UpdateThemeTokens()
         {
             if (_isDark)
             {
-                _windowBg = Color.FromArgb(32, 32, 32);          // Win11 Dark Canvas
-                _sidebarBg = Color.FromArgb(26, 26, 26);         // Win11 Dark Sidebar
-                _cardBg = Color.FromArgb(44, 44, 44);            // SettingsCard Background
-                _cardBorder = Color.FromArgb(60, 60, 60);        // Subtle Card Stroke
-                _textPrimary = Color.FromArgb(246, 246, 246);    // TextPrimary
-                _textSecondary = Color.FromArgb(162, 162, 162);  // TextSecondary
-                _navItemActive = Color.FromArgb(48, 48, 48);
+                _windowBg = Color.FromArgb(18, 20, 26);          // Deep Obsidian
+                _sidebarBg = Color.FromArgb(24, 27, 36);         // Sleek Sidebar
+                _cardBg = Color.FromArgb(30, 34, 45);            // Elevated Card Surface
+                _cardBorder = Color.FromArgb(45, 52, 68);        // Subtle Border
+                _textPrimary = Color.FromArgb(248, 250, 252);    // Crisp Pure Text
+                _textSecondary = Color.FromArgb(148, 163, 184);  // Slate Muted
+                _navItemActive = Color.FromArgb(37, 43, 58);
+                _navItemHover = Color.FromArgb(32, 37, 50);
             }
             else
             {
-                _windowBg = Color.FromArgb(243, 243, 243);        // Win11 Light Canvas
-                _sidebarBg = Color.FromArgb(234, 234, 234);       // Win11 Light Sidebar
-                _cardBg = Color.White;                            // SettingsCard Background
-                _cardBorder = Color.FromArgb(226, 226, 226);      // Subtle Card Stroke
-                _textPrimary = Color.FromArgb(27, 27, 27);        // TextPrimary
-                _textSecondary = Color.FromArgb(94, 94, 94);      // TextSecondary
-                _navItemActive = Color.FromArgb(255, 255, 255);
+                _windowBg = Color.FromArgb(244, 246, 250);       // Pearl Canvas
+                _sidebarBg = Color.FromArgb(255, 255, 255);       // Pure White Sidebar
+                _cardBg = Color.FromArgb(255, 255, 255);          // Elevated White Card
+                _cardBorder = Color.FromArgb(226, 232, 240);      // Slate 200 Border
+                _textPrimary = Color.FromArgb(15, 23, 42);        // Deep Slate Text
+                _textSecondary = Color.FromArgb(100, 116, 139);   // Slate 500 Muted
+                _navItemActive = Color.FromArgb(238, 242, 255);   // Indigo Light Active
+                _navItemHover = Color.FromArgb(241, 245, 249);
             }
         }
 
-        private void BuildFluentUI()
+        private void BuildModernUI()
         {
             this.Controls.Clear();
 
-            int sidebarWidth = 185;
+            int sidebarWidth = 190;
             int totalWidth = this.ClientSize.Width;
             int totalHeight = this.ClientSize.Height;
             int contentWidth = totalWidth - sidebarWidth;
 
             if (_isArabic)
             {
+                // Arabic RTL: Sidebar on Far Right (X = contentWidth), Content on Left (X = 0)
                 _sidebarPanel = new Panel
                 {
                     Location = new Point(contentWidth, 0),
                     Size = new Size(sidebarWidth, totalHeight),
                     BackColor = _sidebarBg,
-                    Padding = new Padding(8)
+                    Padding = new Padding(10)
                 };
 
                 _contentPanel = new Panel
@@ -118,17 +124,18 @@ namespace Munqith.UI
                     Size = new Size(contentWidth, totalHeight),
                     BackColor = _windowBg,
                     AutoScroll = true,
-                    Padding = new Padding(25, 20, 25, 20)
+                    Padding = new Padding(24, 20, 24, 20)
                 };
             }
             else
             {
+                // English LTR: Sidebar on Left (X = 0), Content on Right (X = sidebarWidth)
                 _sidebarPanel = new Panel
                 {
                     Location = new Point(0, 0),
                     Size = new Size(sidebarWidth, totalHeight),
                     BackColor = _sidebarBg,
-                    Padding = new Padding(8)
+                    Padding = new Padding(10)
                 };
 
                 _contentPanel = new Panel
@@ -137,7 +144,7 @@ namespace Munqith.UI
                     Size = new Size(contentWidth, totalHeight),
                     BackColor = _windowBg,
                     AutoScroll = true,
-                    Padding = new Padding(25, 20, 25, 20)
+                    Padding = new Padding(24, 20, 24, 20)
                 };
             }
 
@@ -152,42 +159,42 @@ namespace Munqith.UI
         {
             sidebar.Controls.Clear();
 
-            // App Brand Header
-            var logoPanel = new Panel
+            // Brand Header with Icon Badge
+            var brandCard = new Panel
             {
-                Location = new Point(8, 16),
-                Size = new Size(168, 55),
+                Location = new Point(8, 14),
+                Size = new Size(174, 60),
                 BackColor = Color.Transparent
             };
 
             var appTitle = new Label
             {
                 Text = "🛡️ مُنقِذ Munqith",
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Font = new Font("Segoe UI", 12.5f, FontStyle.Bold),
                 ForeColor = _accentColor,
                 AutoSize = true,
-                Location = new Point(4, 2)
+                Location = new Point(_isArabic ? 10 : 4, 4)
             };
-            logoPanel.Controls.Add(appTitle);
+            brandCard.Controls.Add(appTitle);
 
-            var verLbl = new Label
+            var verBadge = new Label
             {
-                Text = "Windows 11 Edition",
-                Font = new Font("Segoe UI", 8),
+                Text = "v1.0.0 • Background Utility",
+                Font = new Font("Segoe UI", 7.8f, FontStyle.Regular),
                 ForeColor = _textSecondary,
                 AutoSize = true,
-                Location = new Point(6, 26)
+                Location = new Point(_isArabic ? 22 : 6, 28)
             };
-            logoPanel.Controls.Add(verLbl);
+            brandCard.Controls.Add(verBadge);
 
-            sidebar.Controls.Add(logoPanel);
+            sidebar.Controls.Add(brandCard);
 
-            // Navigation Items
+            // Modern Navigation Items
             string[] navItems = _isArabic
                 ? new[] { "📊  الإحصائيات", "⚙️  الإعدادات", "⌨️  الاختصارات", "ℹ️  عن الأداة" }
                 : new[] { "📊  Dashboard", "⚙️  Settings", "⌨️  Hotkeys", "ℹ️  About" };
 
-            int y = 85;
+            int y = 90;
             for (int i = 0; i < navItems.Length; i++)
             {
                 int index = i;
@@ -197,35 +204,35 @@ namespace Munqith.UI
                 {
                     Text = navItems[i],
                     Font = new Font("Segoe UI", 9.5f, isSelected ? FontStyle.Bold : FontStyle.Regular),
-                    Size = new Size(168, 42),
+                    Size = new Size(172, 44),
                     Location = new Point(8, y),
                     FlatStyle = FlatStyle.Flat,
                     BackColor = isSelected ? _navItemActive : Color.Transparent,
                     ForeColor = isSelected ? _accentColor : _textPrimary,
                     TextAlign = _isArabic ? ContentAlignment.MiddleRight : ContentAlignment.MiddleLeft,
                     Cursor = Cursors.Hand,
-                    Padding = new Padding(_isArabic ? 0 : 8, 0, _isArabic ? 8 : 0, 0)
+                    Padding = new Padding(_isArabic ? 0 : 12, 0, _isArabic ? 12 : 0, 0)
                 };
                 navBtn.FlatAppearance.BorderSize = 0;
 
                 navBtn.Click += (s, e) =>
                 {
                     _selectedNavIndex = index;
-                    BuildFluentUI();
+                    BuildModernUI();
                 };
 
                 sidebar.Controls.Add(navBtn);
-                y += 48;
+                y += 50;
             }
 
-            // Bottom Tools: Theme Switcher & Language Switcher
-            int bottomY = sidebar.Height - 100;
+            // Bottom Quick Controls: Theme (Dark/Light) & Language Switcher
+            int bottomY = sidebar.Height - 105;
 
             var themeBtn = new Button
             {
-                Text = _isDark ? "☀️  Light" : "🌙  Dark",
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-                Size = new Size(168, 34),
+                Text = _isDark ? "☀️  Light Mode" : "🌙  Dark Mode",
+                Font = new Font("Segoe UI", 8.8f, FontStyle.Bold),
+                Size = new Size(172, 36),
                 Location = new Point(8, bottomY),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = _cardBg,
@@ -238,18 +245,18 @@ namespace Munqith.UI
                 _isDark = !_isDark;
                 _settingsService.Settings.DarkMode = _isDark;
                 _settingsService.Save();
-                UpdateFluentTokens();
+                UpdateThemeTokens();
                 this.BackColor = _windowBg;
-                BuildFluentUI();
+                BuildModernUI();
             };
             sidebar.Controls.Add(themeBtn);
 
             var langBtn = new Button
             {
-                Text = _isArabic ? "🌐  English" : "🌐  العربية",
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-                Size = new Size(168, 34),
-                Location = new Point(8, bottomY + 40),
+                Text = _isArabic ? "🌐  Switch to English" : "🌐  التحويل للعربية",
+                Font = new Font("Segoe UI", 8.8f, FontStyle.Bold),
+                Size = new Size(172, 36),
+                Location = new Point(8, bottomY + 44),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = _cardBg,
                 ForeColor = _textPrimary,
@@ -263,8 +270,8 @@ namespace Munqith.UI
                 _settingsService.Save();
                 _isArabic = newLang == "ar";
                 this.RightToLeft = _isArabic ? RightToLeft.Yes : RightToLeft.No;
-                this.Text = _isArabic ? "مُنقِذ — إعدادات ويندوز 11" : "Munqith — Windows 11 Settings";
-                BuildFluentUI();
+                this.Text = _isArabic ? "مُنقِذ — Munqith" : "Munqith";
+                BuildModernUI();
             };
             sidebar.Controls.Add(langBtn);
         }
@@ -291,92 +298,106 @@ namespace Munqith.UI
         }
 
         // ==========================================
-        // 1. DASHBOARD & RESCUE METRICS
+        // 1. DASHBOARD & STATS VIEW
         // ==========================================
         private void BuildDashboardView(Panel container)
         {
             int yPos = 10;
-            int cardWidth = 490;
+            int cardWidth = 515;
 
             AddPageHeader(container, ref yPos,
-                _isArabic ? "لوحة الإحصائيات والإنقاذ" : "Dashboard & Rescue Stats",
-                _isArabic ? "متابعة عدد مرات تصحيح الكلمات وتوفير وقت الكتابة في ويندوز" : "Real-time statistics of corrected keystrokes and typing time saved");
+                _isArabic ? "لوحة الإحصائيات والإنقاذ" : "Rescue Statistics & Live Test",
+                _isArabic ? "سجل مباشر لعدد المرات والكلمات التي أنقذك فيها البرنامج مع الوقت المُوفَّر" : "Real-time tracker of converted keystrokes, words saved, and typing time gained");
 
             // Hero Metric Card
-            var heroCard = CreateSettingsCard(yPos, cardWidth, 140);
+            var heroCard = CreateCard(yPos, cardWidth, 145);
 
             var heroTitle = new Label
             {
-                Text = _isArabic ? "إجمالي عدد مرات الإنقاذ 🚀" : "Total Times Rescued 🚀",
+                Text = _isArabic ? "إجمالي عدد مرات الإنقاذ حتى الآن 🚀" : "Total Typing Conversions 🚀",
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
                 ForeColor = _textSecondary,
                 AutoSize = true,
-                Location = new Point(18, 12)
+                Location = new Point(_isArabic ? cardWidth - 230 : 18, 12)
             };
             heroCard.Controls.Add(heroTitle);
 
             _heroCountLabel = new Label
             {
                 Text = _statsService.TotalConversions.ToString("N0"),
-                Font = new Font("Segoe UI Variable Display", 34, FontStyle.Bold),
+                Font = new Font("Segoe UI Variable Display", 32, FontStyle.Bold),
                 ForeColor = _accentColor,
                 AutoSize = true,
-                Location = new Point(14, 30)
+                Location = new Point(_isArabic ? cardWidth - 140 : 16, 30)
             };
             heroCard.Controls.Add(_heroCountLabel);
 
             var heroUnit = new Label
             {
-                Text = _isArabic ? "عملية تحويل ناجحة" : "conversions completed",
+                Text = _isArabic ? "مرة تحويل ناجحة" : "conversions done",
                 Font = new Font("Segoe UI", 10.5f),
                 ForeColor = _textPrimary,
                 AutoSize = true,
-                Location = new Point(_heroCountLabel.PreferredWidth + 22, 50)
+                Location = new Point(_isArabic ? cardWidth - 280 : 130, 48)
             };
             heroCard.Controls.Add(heroUnit);
 
-            int cardW = 145;
+            int cardW = 150;
             int cardH = 46;
-            int yMetrics = 82;
+            int yMetrics = 84;
 
-            _heroCharsLabel = AddMiniStatTile(heroCard, 18, yMetrics, cardW, cardH,
-                _statsService.TotalCharacters.ToString("N0"),
-                _isArabic ? "حرف تم تصحيحه" : "Chars Fixed");
+            if (_isArabic)
+            {
+                // Arabic layout
+                _heroCharsLabel = AddMiniStatTile(heroCard, cardWidth - 18 - cardW, yMetrics, cardW, cardH,
+                    _statsService.TotalCharacters.ToString("N0"), "حرف تم تصحيحه");
 
-            _heroWordsLabel = AddMiniStatTile(heroCard, 172, yMetrics, cardW, cardH,
-                _statsService.TotalWords.ToString("N0"),
-                _isArabic ? "كلمة مُنقَذة" : "Words Saved");
+                _heroWordsLabel = AddMiniStatTile(heroCard, cardWidth - 18 - (cardW * 2) - 10, yMetrics, cardW, cardH,
+                    _statsService.TotalWords.ToString("N0"), "كلمة تم إنقاذها");
 
-            string timeSavedStr = _isArabic ? _statsService.GetTimeSavedDisplayArabic() : _statsService.GetTimeSavedDisplay();
-            _heroTimeLabel = AddMiniStatTile(heroCard, 326, yMetrics, cardW, cardH,
-                timeSavedStr,
-                _isArabic ? "وقت مُوفَّر" : "Time Saved");
+                string timeSavedStr = _statsService.GetTimeSavedDisplayArabic();
+                _heroTimeLabel = AddMiniStatTile(heroCard, cardWidth - 18 - (cardW * 3) - 20, yMetrics, cardW, cardH,
+                    timeSavedStr, "وقت مُوفَّر");
+            }
+            else
+            {
+                // English layout
+                _heroCharsLabel = AddMiniStatTile(heroCard, 18, yMetrics, cardW, cardH,
+                    _statsService.TotalCharacters.ToString("N0"), "Chars Corrected");
+
+                _heroWordsLabel = AddMiniStatTile(heroCard, 180, yMetrics, cardW, cardH,
+                    _statsService.TotalWords.ToString("N0"), "Words Saved");
+
+                string timeSavedStr = _statsService.GetTimeSavedDisplay();
+                _heroTimeLabel = AddMiniStatTile(heroCard, 342, yMetrics, cardW, cardH,
+                    timeSavedStr, "Time Saved");
+            }
 
             container.Controls.Add(heroCard);
-            yPos += 152;
+            yPos += 158;
 
-            // Live Playground SettingsCard
-            var testCard = CreateSettingsCard(yPos, cardWidth, 175);
+            // Live Playground Card
+            var testCard = CreateCard(yPos, cardWidth, 180);
 
             var testTitle = new Label
             {
-                Text = _isArabic ? "🧪 منطقة تجربة الأداة الفورية (Live Test)" : "🧪 Live Converter Playground",
+                Text = _isArabic ? "🧪  منطقة التجربة الفورية (Live Test)" : "🧪  Instant Converter Playground",
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
                 ForeColor = _textPrimary,
                 AutoSize = true,
-                Location = new Point(18, 12)
+                Location = new Point(_isArabic ? cardWidth - 280 : 18, 12)
             };
             testCard.Controls.Add(testTitle);
 
             var testDesc = new Label
             {
                 Text = _isArabic
-                    ? "اكتب أي نص إنجليزي لخبطة هنا واضغط الزر لتجربة التحويل والتقليب فوراً:"
-                    : "Type garbled text below and click button to test bidirectional conversion instantly:",
+                    ? "اكتب أي نص إنجليزي ملخبط هنا واضغط الزر لاختبار التحويل والتقليب فوراً:"
+                    : "Type garbled English text below and click button to test instant bidirectional conversion:",
                 Font = new Font("Segoe UI", 8.5f),
                 ForeColor = _textSecondary,
                 AutoSize = true,
-                Location = new Point(18, 36)
+                Location = new Point(_isArabic ? cardWidth - 480 : 18, 36)
             };
             testCard.Controls.Add(testDesc);
 
@@ -384,11 +405,12 @@ namespace Munqith.UI
             {
                 Text = "hgf,hfm ,hpim",
                 Font = new Font("Segoe UI", 10.5f),
-                Size = new Size(450, 32),
-                Location = new Point(18, 62),
-                BackColor = _isDark ? Color.FromArgb(52, 52, 52) : Color.FromArgb(248, 249, 250),
+                Size = new Size(475, 32),
+                Location = new Point(18, 64),
+                BackColor = _isDark ? Color.FromArgb(40, 45, 58) : Color.FromArgb(248, 250, 252),
                 ForeColor = _textPrimary,
-                BorderStyle = BorderStyle.FixedSingle
+                BorderStyle = BorderStyle.FixedSingle,
+                RightToLeft = _isArabic ? RightToLeft.Yes : RightToLeft.No
             };
             testCard.Controls.Add(testBox);
 
@@ -396,8 +418,8 @@ namespace Munqith.UI
             {
                 Text = _isArabic ? "🔄  شقلب النص الآن" : "🔄  Convert Text Now",
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                Size = new Size(190, 36),
-                Location = new Point(18, 115),
+                Size = new Size(185, 36),
+                Location = new Point(_isArabic ? cardWidth - 203 : 18, 118),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = _accentColor,
                 ForeColor = Color.White,
@@ -435,7 +457,7 @@ namespace Munqith.UI
             {
                 Location = new Point(x, y),
                 Size = new Size(w, h),
-                BackColor = _isDark ? Color.FromArgb(52, 52, 52) : Color.FromArgb(244, 245, 248)
+                BackColor = _isDark ? Color.FromArgb(42, 48, 62) : Color.FromArgb(241, 245, 249)
             };
 
             var vLbl = new Label
@@ -444,7 +466,7 @@ namespace Munqith.UI
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = _textPrimary,
                 AutoSize = true,
-                Location = new Point(8, 4)
+                Location = new Point(_isArabic ? w - 70 : 8, 4)
             };
             tile.Controls.Add(vLbl);
 
@@ -454,7 +476,7 @@ namespace Munqith.UI
                 Font = new Font("Segoe UI", 7.8f),
                 ForeColor = _textSecondary,
                 AutoSize = true,
-                Location = new Point(8, 24)
+                Location = new Point(_isArabic ? w - 110 : 8, 24)
             };
             tile.Controls.Add(dLbl);
 
@@ -463,51 +485,113 @@ namespace Munqith.UI
         }
 
         // ==========================================
-        // 2. SETTINGS CARDS
+        // 2. SETTINGS & CONVERSION MODES
         // ==========================================
         private void BuildSettingsCardsView(Panel container)
         {
             int yPos = 10;
-            int cardWidth = 490;
+            int cardWidth = 515;
 
             AddPageHeader(container, ref yPos,
-                _isArabic ? "إعدادات الأداة والنظام" : "General Settings & Controls",
-                _isArabic ? "تخصيص سلوك التحويل التلقائي والتشغيل في ويندوز" : "Configure conversion scope behavior and startup options");
+                _isArabic ? "خيارات وطرق التحويل" : "Conversion Scope & Settings",
+                _isArabic ? "اختر طريقة استجابة الأداة عند ضغط الاختصار وسلوك التشغيل" : "Choose how Munqith captures text when shortcut is pressed and set options");
 
-            // SettingsCard 1: Conversion Scope Mode
-            var modeCard = CreateSettingsCard(yPos, cardWidth, 68);
-            AddCardTexts(modeCard,
-                _isArabic ? "🎯  وضع ونطاق التحويل" : "🎯  Conversion Scope Mode",
-                _isArabic ? "التحويل التلقائي للنص المحدد أو السطر أو الكلمة" : "Target text scope (Selected text, whole line, or last word)");
+            // Mode Selector Card with Detailed Explanations
+            var modeCard = CreateCard(yPos, cardWidth, 120);
+
+            var modeTitle = new Label
+            {
+                Text = _isArabic ? "🎯  طريقة ووضع تحويل النصوص:" : "🎯  Text Conversion Scope Mode:",
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = _textPrimary,
+                AutoSize = true,
+                Location = new Point(_isArabic ? cardWidth - 240 : 16, 12)
+            };
+            modeCard.Controls.Add(modeTitle);
 
             var modeCombo = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9.5f),
-                Size = new Size(185, 30),
-                Location = new Point(285, 18),
-                BackColor = _isDark ? Color.FromArgb(52, 52, 52) : Color.White,
+                Size = new Size(320, 30),
+                Location = new Point(_isArabic ? cardWidth - 336 : 16, 38),
+                BackColor = _isDark ? Color.FromArgb(42, 48, 62) : Color.White,
                 ForeColor = _textPrimary,
                 FlatStyle = FlatStyle.Flat
             };
+
             var modeItems = _isArabic
-                ? new[] { "النص المحدد (تلقائي)", "السطر/الجملة الحالية", "آخر كلمة فقط" }
-                : new[] { "Selected Text (Auto)", "Current Line", "Last Word Only" };
+                ? new[]
+                {
+                    "1. الوضع التلقائي الذكي (تحديد بالماوس أو السطر الحالي)",
+                    "2. النص المحدد فقط (تظليل بالماوس)",
+                    "3. آخر كلمة فقط (السابقة للمؤشر مباشرة)"
+                }
+                : new[]
+                {
+                    "1. Smart Auto-Select (Selection or Current Line)",
+                    "2. Selected Text Only (Mouse Highlight)",
+                    "3. Last Word Only (Word before cursor)"
+                };
+
             modeCombo.Items.AddRange(modeItems);
-            modeCombo.SelectedIndex = (int)_settingsService.Settings.ConversionMode;
+
+            // Map current index
+            int currentIdx = (int)_settingsService.Settings.ConversionMode;
+            if (currentIdx == 0) modeCombo.SelectedIndex = 0; // AllText/Smart
+            else if (currentIdx == 1) modeCombo.SelectedIndex = 1;
+            else modeCombo.SelectedIndex = 2;
+
+            var modeDescLbl = new Label
+            {
+                Font = new Font("Segoe UI", 8.2f),
+                ForeColor = _textSecondary,
+                AutoSize = true,
+                Location = new Point(_isArabic ? cardWidth - 480 : 16, 78)
+            };
+
+            Action updateModeDesc = () =>
+            {
+                if (modeCombo.SelectedIndex == 0)
+                {
+                    modeDescLbl.Text = _isArabic
+                        ? "💡 الشرح: لو مظلل نص بالماوس هيحوله، ولو مش مظلل هيحول آخر سطر/جملة كتبتها تلقائياً."
+                        : "💡 Explanation: Converts highlighted text if selected; otherwise converts the whole current line.";
+                }
+                else if (modeCombo.SelectedIndex == 1)
+                {
+                    modeDescLbl.Text = _isArabic
+                        ? "💡 الشرح: يحول فقط الكلام اللي بتحدده بالماوس، ولن يلمس أي نص إذا لم تقم بتحديده."
+                        : "💡 Explanation: Only converts text when you explicitly highlight it with your mouse.";
+                }
+                else
+                {
+                    modeDescLbl.Text = _isArabic
+                        ? "💡 الشرح: يحول فقط الكلمة الأخيرة المتصلة بالمؤشر دون المساس بباقي الجملة."
+                        : "💡 Explanation: Only converts the single word immediately before the text cursor.";
+                }
+            };
+            updateModeDesc();
+
             modeCombo.SelectedIndexChanged += (s, e) =>
             {
-                _settingsService.Settings.ConversionMode = (ConversionMode)modeCombo.SelectedIndex;
-                _settingsService.Save();
-            };
-            modeCard.Controls.Add(modeCombo);
-            container.Controls.Add(modeCard);
-            yPos += 80;
+                if (modeCombo.SelectedIndex == 0) _settingsService.Settings.ConversionMode = ConversionMode.SelectedText;
+                else if (modeCombo.SelectedIndex == 1) _settingsService.Settings.ConversionMode = ConversionMode.AllText;
+                else _settingsService.Settings.ConversionMode = ConversionMode.LastWord;
 
-            // SettingsCard 2: Smart Detection (ToggleSwitch)
-            yPos = AddToggleSettingsCard(container, yPos, cardWidth,
-                _isArabic ? "🧠  الكشف الذكي (Smart Detection)" : "🧠  Smart Word Detection",
-                _isArabic ? "الحفاظ على الكلمات الإنجليزية الصحيحة وتصحيح الحروف الخطأ فقط" : "Preserves valid English vocabulary and only converts typos",
+                _settingsService.Save();
+                updateModeDesc();
+            };
+
+            modeCard.Controls.Add(modeCombo);
+            modeCard.Controls.Add(modeDescLbl);
+            container.Controls.Add(modeCard);
+            yPos += 132;
+
+            // Smart Detection Toggle Card
+            yPos = AddToggleCard(container, yPos, cardWidth,
+                _isArabic ? "🧠  الكشف الذكي للكلمات (Smart Vocabulary)" : "🧠  Smart Vocabulary Detection",
+                _isArabic ? "يحافظ على الكلمات الإنجليزية الصحيحة تلقائياً ويصحح فقط الكلمات غير المفهومة" : "Preserves real English words and only flips actual typing mistakes",
                 _settingsService.Settings.SmartDetectionEnabled,
                 val =>
                 {
@@ -515,10 +599,10 @@ namespace Munqith.UI
                     _settingsService.Save();
                 });
 
-            // SettingsCard 3: Launch with Windows (ToggleSwitch)
-            yPos = AddToggleSettingsCard(container, yPos, cardWidth,
-                _isArabic ? "🚀  بدء التشغيل مع الويندوز" : "🚀  Launch on Windows Startup",
-                _isArabic ? "تشغيل الأداة تلقائياً في الخلفية عند فتح الكمبيوتر" : "Automatically runs Munqith in the system tray when Windows boots",
+            // Windows Startup Toggle Card
+            yPos = AddToggleCard(container, yPos, cardWidth,
+                _isArabic ? "🚀  التشغيل التلقائي مع فتح الجهاز" : "🚀  Launch on Windows Startup",
+                _isArabic ? "تشغيل مُنقِذ تلقائياً في الخلفية في شريط المهام عند فتح الويندوز" : "Automatically launch Munqith in the system tray when Windows boots up",
                 _settingsService.Settings.StartWithWindows,
                 val =>
                 {
@@ -527,16 +611,16 @@ namespace Munqith.UI
                     _settingsService.Save();
                 });
 
-            // Instant Save Card with Fluent Button
-            var saveCard = CreateSettingsCard(yPos, cardWidth, 68);
+            // Instant Save Card
+            var saveCard = CreateCard(yPos, cardWidth, 68);
             var saveBtn = new Button
             {
                 Text = _isArabic ? "💾  حفظ وتطبيق الإعدادات فوراً" : "💾  Save & Apply Instantly",
-                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
-                Size = new Size(240, 40),
-                Location = new Point(18, 14),
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Size = new Size(230, 40),
+                Location = new Point(_isArabic ? cardWidth - 246 : 16, 14),
                 FlatStyle = FlatStyle.Flat,
-                BackColor = _successColor,
+                BackColor = _emeraldGreen,
                 ForeColor = Color.White,
                 Cursor = Cursors.Hand
             };
@@ -544,11 +628,11 @@ namespace Munqith.UI
 
             _saveToastLabel = new Label
             {
-                Text = _isArabic ? "✅ تم التطبيق فوراً بنجاح!" : "✅ Applied successfully!",
+                Text = _isArabic ? "✅ تم الحفظ والتطبيق فوراً!" : "✅ Saved & Applied Instantly!",
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                ForeColor = _successColor,
+                ForeColor = _emeraldGreen,
                 AutoSize = true,
-                Location = new Point(275, 24),
+                Location = new Point(_isArabic ? 20 : 260, 24),
                 Visible = false
             };
 
@@ -574,26 +658,26 @@ namespace Munqith.UI
         }
 
         // ==========================================
-        // 3. HOTKEYS & INTERACTIVE KEY RECORDER
+        // 3. KEYBOARD HOTKEYS & RECORDER
         // ==========================================
         private void BuildHotkeysCardsView(Panel container)
         {
             int yPos = 10;
-            int cardWidth = 490;
+            int cardWidth = 515;
 
             AddPageHeader(container, ref yPos,
-                _isArabic ? "إدارة الاختصارات ومُسجّل الكيبورد" : "Global Hotkeys & Key Recorder",
-                _isArabic ? "إضافة وتخصيص مفاتيح الاختصار لتشغيل التحويل في أي مكان" : "Manage active global hotkey combinations or record new shortcuts");
+                _isArabic ? "إدارة اختصارات الكيبورد" : "Keyboard Shortcuts & Binder",
+                _isArabic ? "تخصيص المفاتيح التي تقوم بتحويل وشقلبة النص في أي برنامج" : "Manage active hotkeys or record new custom keyboard combinations");
 
             // Hotkeys List Card
-            var listCard = CreateSettingsCard(yPos, cardWidth, 190);
+            var listCard = CreateCard(yPos, cardWidth, 195);
             var listTitle = new Label
             {
-                Text = _isArabic ? "⌨️  الاختصارات النشطة حالياً" : "⌨️  Currently Active Hotkeys",
+                Text = _isArabic ? "⌨️  الاختصارات النشطة حالياً:" : "⌨️  Currently Active Shortcuts:",
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = _textPrimary,
                 AutoSize = true,
-                Location = new Point(18, 12)
+                Location = new Point(_isArabic ? cardWidth - 230 : 16, 12)
             };
             listCard.Controls.Add(listTitle);
 
@@ -610,7 +694,7 @@ namespace Munqith.UI
                     ForeColor = Color.White,
                     BackColor = _accentColor,
                     AutoSize = true,
-                    Location = new Point(20, yOffset + 2)
+                    Location = new Point(_isArabic ? cardWidth - 140 : 18, yOffset + 2)
                 };
                 listCard.Controls.Add(badge);
 
@@ -618,7 +702,7 @@ namespace Munqith.UI
                 {
                     Checked = hk.IsEnabled,
                     IsDark = _isDark,
-                    Location = new Point(240, yOffset)
+                    Location = new Point(_isArabic ? cardWidth - 260 : 220, yOffset)
                 };
                 toggle.CheckedChanged += (s, e) =>
                 {
@@ -633,9 +717,9 @@ namespace Munqith.UI
                     Text = _isArabic ? "حذف" : "Delete",
                     Font = new Font("Segoe UI", 8.5f),
                     Size = new Size(60, 26),
-                    Location = new Point(410, yOffset - 1),
+                    Location = new Point(_isArabic ? 20 : 420, yOffset - 1),
                     FlatStyle = FlatStyle.Flat,
-                    BackColor = Color.FromArgb(198, 40, 40),
+                    BackColor = _roseRed,
                     ForeColor = Color.White,
                     Cursor = Cursors.Hand
                 };
@@ -645,7 +729,7 @@ namespace Munqith.UI
                     _settingsService.Settings.Hotkeys.RemoveAt(index);
                     _settingsService.Save();
                     _trayContext.RegisterConfiguredHotkeys();
-                    BuildFluentUI();
+                    BuildModernUI();
                 };
                 listCard.Controls.Add(delBtn);
 
@@ -653,40 +737,40 @@ namespace Munqith.UI
             }
 
             container.Controls.Add(listCard);
-            yPos += 202;
+            yPos += 207;
 
-            // Interactive Keyboard Recorder Card (KEYBOARD ONLY - MOUSE FULLY BLOCKED)
-            var recCard = CreateSettingsCard(yPos, cardWidth, 160);
+            // Dedicated Keyboard Recorder Card (NO MOUSE, NO AUDIO)
+            var recCard = CreateCard(yPos, cardWidth, 160);
             var recTitle = new Label
             {
-                Text = _isArabic ? "⌨️  مسجل اختصارات الكيبورد (Keyboard Hotkey Recorder)" : "⌨️  Keyboard Hotkey Recorder",
+                Text = _isArabic ? "⌨️  مسجل اختصارات الكيبورد التفاعلي" : "⌨️  Interactive Keyboard Recorder",
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = _textPrimary,
                 AutoSize = true,
-                Location = new Point(18, 12)
+                Location = new Point(_isArabic ? cardWidth - 280 : 16, 12)
             };
             recCard.Controls.Add(recTitle);
 
             var recDesc = new Label
             {
                 Text = _isArabic
-                    ? "اضغط على الزر ثم اضغط مفاتيح الاختصار على الكيبورد مباشرة (مثل Alt+Q أو Ctrl+Shift+Z):"
-                    : "Click below then press your desired keyboard hotkey combination (e.g. Alt+Q or Ctrl+Shift+Z):",
+                    ? "اضغط الزر بالماوس، ثم اضغط تركيبة المفاتيح بالكيبورد (مثلاً Alt+Q أو Ctrl+Shift+Z):"
+                    : "Click below, then press your desired keyboard hotkey (e.g. Alt+Q or Ctrl+Shift+Z):",
                 Font = new Font("Segoe UI", 8.5f),
                 ForeColor = _textSecondary,
                 AutoSize = true,
-                Location = new Point(18, 36)
+                Location = new Point(_isArabic ? cardWidth - 480 : 16, 36)
             };
             recCard.Controls.Add(recDesc);
 
             _recordButton = new Button
             {
-                Text = _isArabic ? "⌨️ اضغط هنا لتسجيل اختصار الكيبورد..." : "⌨️ Click here to record keyboard shortcut...",
+                Text = _isArabic ? "⌨️ اضغط هنا لتسجيل اختصار كيبورد جديد..." : "⌨️ Click here to record keyboard hotkey...",
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                Size = new Size(450, 42),
-                Location = new Point(18, 62),
+                Size = new Size(480, 44),
+                Location = new Point(16, 64),
                 FlatStyle = FlatStyle.Flat,
-                BackColor = _isDark ? Color.FromArgb(52, 52, 52) : Color.FromArgb(242, 244, 248),
+                BackColor = _isDark ? Color.FromArgb(40, 45, 58) : Color.FromArgb(241, 245, 249),
                 ForeColor = _accentColor,
                 Cursor = Cursors.Hand
             };
@@ -697,24 +781,24 @@ namespace Munqith.UI
             {
                 _isRecordingHotkey = true;
                 _recordButton.Text = _isArabic ? "⏳ جاري الاستماع... اضغط مفاتيح الكيبورد الآن!" : "⏳ Listening... Press keyboard keys now!";
-                _recordButton.BackColor = Color.FromArgb(255, 236, 179);
-                _recordButton.ForeColor = Color.Black;
+                _recordButton.BackColor = Color.FromArgb(254, 243, 199);
+                _recordButton.ForeColor = Color.FromArgb(146, 64, 14);
                 _recordButton.Focus();
             };
 
-            // STRICT KEYBOARD CAPTURE ONLY - BLOCK ALL MOUSE KEYS
+            // BLOCK ALL MOUSE CLICKS FROM BEING RECORDED
             _recordButton.KeyDown += (s, e) =>
             {
                 if (!_isRecordingHotkey) return;
 
                 e.SuppressKeyPress = true;
 
-                // IGNORE MOUSE KEYS OR RAW MODIFIER PRESSES ALONE
+                // Ignore mouse keys or solo modifier releases
                 if (e.KeyCode == Keys.LButton || e.KeyCode == Keys.RButton || e.KeyCode == Keys.MButton ||
                     e.KeyCode == Keys.XButton1 || e.KeyCode == Keys.XButton2 ||
                     e.KeyCode == Keys.ControlKey || e.KeyCode == Keys.ShiftKey || e.KeyCode == Keys.Menu || e.KeyCode == Keys.None)
                 {
-                    return; // Ignore raw mouse and solo modifier
+                    return;
                 }
 
                 int mods = 0;
@@ -731,9 +815,9 @@ namespace Munqith.UI
                     IsEnabled = true
                 };
 
-                _recordButton.Text = $"✅ تم تسجيل: {newBinding.DisplayName}";
-                _recordButton.BackColor = Color.FromArgb(232, 245, 233);
-                _recordButton.ForeColor = Color.FromArgb(46, 125, 50);
+                _recordButton.Text = $"✅ تم تسجيل الاختصار: {newBinding.DisplayName}";
+                _recordButton.BackColor = Color.FromArgb(209, 250, 229);
+                _recordButton.ForeColor = _emeraldGreen;
 
                 _settingsService.Settings.Hotkeys.Add(newBinding);
                 _settingsService.Save();
@@ -743,7 +827,7 @@ namespace Munqith.UI
                 {
                     if (this.IsHandleCreated)
                     {
-                        this.Invoke(() => BuildFluentUI());
+                        this.Invoke(() => BuildModernUI());
                     }
                 });
             };
@@ -753,66 +837,64 @@ namespace Munqith.UI
         }
 
         // ==========================================
-        // 4. ABOUT & SPECS VIEW
+        // 4. ABOUT & PROJECT INFO
         // ==========================================
         private void BuildAboutView(Panel container)
         {
             int yPos = 10;
-            int cardWidth = 490;
+            int cardWidth = 515;
 
             AddPageHeader(container, ref yPos,
                 _isArabic ? "عن أداة مُنقِذ" : "About Munqith",
-                _isArabic ? "معلومات الأداة ومصدر المشروع والترخيص" : "Project specifications, open source repository, and license");
+                _isArabic ? "معلومات الأداة والتقنية المستخدمة" : "Application details, tech stack, and open source repository");
 
-            var aboutCard = CreateSettingsCard(yPos, cardWidth, 330);
+            var aboutCard = CreateCard(yPos, cardWidth, 310);
 
             var title = new Label
             {
-                Text = "🛡️ مُنقِذ Munqith v1.0.0",
-                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                Text = "🛡️ مُنقِذ — Munqith v1.0.0",
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
                 ForeColor = _accentColor,
                 AutoSize = true,
-                Location = new Point(20, 20)
+                Location = new Point(_isArabic ? cardWidth - 270 : 20, 18)
             };
             aboutCard.Controls.Add(title);
 
             var desc = new Label
             {
                 Text = _isArabic
-                    ? "أداة ويندوز سريعة ولحظية تصحح لغة الكتابة تلقائياً في جميع برامج الجهاز بضغطة اختصار واحدة.\n\n" +
-                      "مصممة خصيصاً لنظام Windows 11 وفق معايير Fluent Design System الرسمية."
-                    : "Fast, instantaneous Windows utility that auto-corrects text typed with the wrong keyboard layout across all Windows apps.\n\n" +
-                      "Engineered for Windows 11 adhering to official Fluent Design System guidelines.",
+                    ? "أداة ويندوز ذكية وفائقة السرعة تعمل في الخلفية لتصحيح لغة الكتابة تلقائياً في كافة البرامج والمتصفحات بضغطة اختصار واحدة، دون الحاجة لإعادة كتابة النص من جديد."
+                    : "Fast, lightweight Windows utility running in the background to instantly auto-correct mistyped keyboard layouts across all Windows apps and browsers with a single hotkey.",
                 Font = new Font("Segoe UI", 9.5f),
                 ForeColor = _textPrimary,
                 AutoSize = true,
-                MaximumSize = new Size(450, 0),
-                Location = new Point(20, 65)
+                MaximumSize = new Size(475, 0),
+                Location = new Point(_isArabic ? 20 : 20, 60)
             };
             aboutCard.Controls.Add(desc);
 
             var techInfo = new Label
             {
                 Text = _isArabic
-                    ? "• نظام التشغيل: Windows 10 / Windows 11\n" +
-                      "• التقنية: C# .NET 8.0 (LTS) — Self-contained Single Executable\n" +
-                      "• الاستجابة: Win32 Low-Level Hook + Native Clipboard (<30ms)"
-                    : "• OS: Windows 10 / Windows 11\n" +
-                      "• Tech Stack: C# .NET 8.0 (LTS) — Self-contained Single Executable\n" +
-                      "• Response: Win32 Low-Level Hook + Native Clipboard (<30ms)",
+                    ? "• بيئة التشغيل: Windows 10 / Windows 11 (64-bit)\n" +
+                      "• التقنية: C# .NET 8.0 (LTS) — تطبيق مدمج مستقل بالكامل\n" +
+                      "• محرك الالتقاط: Win32 Low-Level Hook + Native Clipboard (<30ms)"
+                    : "• OS: Windows 10 / Windows 11 (64-bit)\n" +
+                      "• Engine: C# .NET 8.0 (LTS) — Self-contained standalone executable\n" +
+                      "• Latency: Win32 Low-Level Hook + Native Clipboard (<30ms)",
                 Font = new Font("Segoe UI", 8.8f),
                 ForeColor = _textSecondary,
                 AutoSize = true,
-                Location = new Point(20, 185)
+                Location = new Point(_isArabic ? cardWidth - 480 : 20, 150)
             };
             aboutCard.Controls.Add(techInfo);
 
             var githubBtn = new Button
             {
-                Text = "🌐 GitHub Repository",
+                Text = "🌐  GitHub Repository",
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                Size = new Size(180, 38),
-                Location = new Point(20, 265),
+                Size = new Size(185, 38),
+                Location = new Point(_isArabic ? cardWidth - 205 : 20, 245),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = _accentColor,
                 ForeColor = Color.White,
@@ -833,14 +915,14 @@ namespace Munqith.UI
         }
 
         // ==========================================
-        // HELPERS: Fluent SettingsCard & Controls
+        // HELPERS: Cards, Headers, Toggles
         // ==========================================
         private void AddPageHeader(Panel container, ref int yPos, string title, string subtitle)
         {
             var headerLbl = new Label
             {
                 Text = title,
-                Font = new Font("Segoe UI Variable Display", 17, FontStyle.Bold),
+                Font = new Font("Segoe UI Variable Display", 16, FontStyle.Bold),
                 ForeColor = _textPrimary,
                 AutoSize = true,
                 Location = new Point(4, yPos)
@@ -853,14 +935,14 @@ namespace Munqith.UI
                 Font = new Font("Segoe UI", 8.8f),
                 ForeColor = _textSecondary,
                 AutoSize = true,
-                Location = new Point(6, yPos + 32)
+                Location = new Point(6, yPos + 30)
             };
             container.Controls.Add(subLbl);
 
-            yPos += 64;
+            yPos += 62;
         }
 
-        private Panel CreateSettingsCard(int y, int width, int height)
+        private Panel CreateCard(int y, int width, int height)
         {
             var card = new Panel
             {
@@ -875,23 +957,25 @@ namespace Munqith.UI
                 using var pen = new Pen(_cardBorder, 1);
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-                // 8px Corner Radius Path
-                using var path = CreateRoundedRectPath(new Rectangle(0, 0, card.Width - 1, card.Height - 1), 8);
+                using var path = CreateRoundedRectPath(new Rectangle(0, 0, card.Width - 1, card.Height - 1), 10);
                 e.Graphics.DrawPath(pen, path);
             };
 
             return card;
         }
 
-        private void AddCardTexts(Panel card, string title, string subtitle)
+        private int AddToggleCard(Panel container, int y, int cardWidth, string title, string subtitle, bool isChecked, Action<bool> onChange)
         {
+            int height = string.IsNullOrEmpty(subtitle) ? 54 : 64;
+            var card = CreateCard(y, cardWidth, height);
+
             var titleLbl = new Label
             {
                 Text = title,
                 Font = new Font("Segoe UI", 9.8f, FontStyle.Bold),
                 ForeColor = _textPrimary,
                 AutoSize = true,
-                Location = new Point(14, string.IsNullOrEmpty(subtitle) ? 14 : 10)
+                Location = new Point(_isArabic ? cardWidth - 320 : 16, string.IsNullOrEmpty(subtitle) ? 14 : 10)
             };
             card.Controls.Add(titleLbl);
 
@@ -903,23 +987,16 @@ namespace Munqith.UI
                     Font = new Font("Segoe UI", 8.2f),
                     ForeColor = _textSecondary,
                     AutoSize = true,
-                    Location = new Point(14, 32)
+                    Location = new Point(_isArabic ? cardWidth - 480 : 16, 32)
                 };
                 card.Controls.Add(subLbl);
             }
-        }
-
-        private int AddToggleSettingsCard(Panel container, int y, int cardWidth, string title, string subtitle, bool isChecked, Action<bool> onChange)
-        {
-            int height = string.IsNullOrEmpty(subtitle) ? 52 : 64;
-            var card = CreateSettingsCard(y, cardWidth, height);
-            AddCardTexts(card, title, subtitle);
 
             var toggle = new WinUIToggleSwitch
             {
                 Checked = isChecked,
                 IsDark = _isDark,
-                Location = new Point(420, string.IsNullOrEmpty(subtitle) ? 14 : 18)
+                Location = new Point(_isArabic ? 20 : cardWidth - 65, string.IsNullOrEmpty(subtitle) ? 14 : 18)
             };
             toggle.CheckedChanged += (s, e) => onChange(toggle.Checked);
             card.Controls.Add(toggle);
