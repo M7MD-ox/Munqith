@@ -75,6 +75,25 @@ namespace Munqith.Core
             await Task.Delay(MICRO_DELAY_MS);
         }
 
+        /// <summary>
+        /// Selects N characters backward from the current cursor position.
+        /// </summary>
+        public static async Task SimulateSelectCharsBackward(int count)
+        {
+            ReleaseModifiers();
+            await Task.Delay(MICRO_DELAY_MS);
+
+            for (int i = 0; i < count; i++)
+            {
+                NativeMethods.keybd_event(NativeMethods.VK_SHIFT_B, 0, 0, UIntPtr.Zero);
+                NativeMethods.keybd_event(NativeMethods.VK_LEFT_B, 0, 0, UIntPtr.Zero);
+                NativeMethods.keybd_event(NativeMethods.VK_LEFT_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+                NativeMethods.keybd_event(NativeMethods.VK_SHIFT_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            }
+
+            await Task.Delay(MICRO_DELAY_MS);
+        }
+
         public static async Task<string?> GetTextForConversion(ConversionMode mode)
         {
             switch (mode)
