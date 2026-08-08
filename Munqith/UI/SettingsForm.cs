@@ -333,8 +333,8 @@ namespace Munqith.UI
             var testDesc = new Label
             {
                 Text = _isArabic
-                    ? "اكتب أي نص إنجليزي لخبطة هنا (مثلاً: hgf,hfm) ثم اضغط زر التحويل لتجربة التحويل:"
-                    : "Type garbled text below (e.g. hgf,hfm) and click convert to test instantly:",
+                    ? "اكتب أي نص إنجليزي أو عربي لخبطة هنا واضغط الزر لتجربة التحويل والتقليب فوراً:"
+                    : "Type garbled text below and click button to test bidirectional conversion instantly:",
                 Font = new Font("Segoe UI", 8.5f),
                 ForeColor = _subTextColor,
                 AutoSize = true,
@@ -379,7 +379,6 @@ namespace Munqith.UI
                     };
                     _statsService.RecordConversion(res);
 
-                    // Update stats labels in-place WITHOUT resetting the text box!
                     if (_heroCountLabel != null) _heroCountLabel.Text = _statsService.TotalConversions.ToString("N0");
                     if (_heroCharsLabel != null) _heroCharsLabel.Text = _statsService.TotalCharacters.ToString("N0");
                     if (_heroWordsLabel != null) _heroWordsLabel.Text = _statsService.TotalWords.ToString("N0");
@@ -446,10 +445,10 @@ namespace Munqith.UI
 
             var modeCard = CreateCard(yPos, 65);
             var modes = _isArabic
-                ? new[] { "النص المحدد فقط (Selected Text)", "كل النص في الحقل (All Text)", "آخر كلمة فقط (Last Word)" }
-                : new[] { "Selected Text Only", "All Text", "Last Word Only" };
+                ? new[] { "النص المحدد (مع التحويل التلقائي الذكي)", "السطر أو الجملة الحالية كاملة", "آخر كلمة فقط قبل المؤشر" }
+                : new[] { "Selected Text (with auto fallback)", "Entire Current Line / Sentence", "Last Word Only" };
             AddComboSetting(modeCard,
-                _isArabic ? "🎯 وضع التحويل" : "🎯 Conversion Mode",
+                _isArabic ? "🎯 وضع ونطاق التحويل" : "🎯 Conversion Scope Mode",
                 modes,
                 (int)_settingsService.Settings.ConversionMode,
                 idx =>
@@ -462,7 +461,7 @@ namespace Munqith.UI
 
             yPos = AddToggleSetting(container, yPos,
                 _isArabic ? "🧠 الكشف الذكي (Smart Detection)" : "🧠 Smart Detection",
-                _isArabic ? "الحفاظ على الكلمات الإنجليزية الصحيحة وتصحيح الكلمات الخطأ فقط" : "Preserves real English words and only converts garbled typos",
+                _isArabic ? "الحفاظ على الكلمات الإنجليزية الصحيحة وتصحيح الكلمات الخطأ فقط" : "Preserves real English words and only converts typos",
                 _settingsService.Settings.SmartDetectionEnabled,
                 val =>
                 {
@@ -777,7 +776,7 @@ namespace Munqith.UI
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9.5f),
-                Size = new Size(240, 30),
+                Size = new Size(260, 30),
                 Location = new Point(15, 30),
                 BackColor = _isDark ? Color.FromArgb(55, 55, 55) : Color.White,
                 ForeColor = _textColor,

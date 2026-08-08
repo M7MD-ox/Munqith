@@ -12,11 +12,6 @@ namespace Munqith.Services
         private static bool _isConverting = false;
         private static readonly object _lockObj = new();
 
-        // In-Place Toggle state
-        private string? _lastPastedText;
-        private string? _lastAlternateText;
-        private DateTime _lastConversionTime = DateTime.MinValue;
-
         public ConversionService(SettingsService settingsService, StatsService statsService)
         {
             _settingsService = settingsService;
@@ -37,43 +32,29 @@ namespace Munqith.Services
             {
                 var settings = _settingsService.Settings;
 
-                // 1. IN-PLACE TOGGLE CHECK (Back & Forth flip in same position)
-                if (!string.IsNullOrEmpty(_lastPastedText) && 
-                    !string.IsNullOrEmpty(_lastAlternateText) &&
-                    (DateTime.UtcNow - _lastConversionTime).TotalSeconds < 8)
-                {
-                    // Select the characters of the last pasted text backward from cursor
-                    await TextSelectionHelper.SimulateSelectCharsBackward(_lastPastedText.Length);
-                    string? currentText = NativeClipboard.GetText(maxRetries: 4, delayMs: 6);
-
-                    // Swap the text in place
-                    string nextText = _lastAlternateText;
-                    string prevText = _lastPastedText;
-
-                    _lastPastedText = nextText;
-                    _lastAlternateText = prevText;
-                    _lastConversionTime = DateTime.UtcNow;
-
-                    NativeClipboard.SetText(nextText);
-                    await TextSelectionHelper.SimulatePaste();
-                    return;
-                }
-
-                // 2. FRESH CONVERSION
+                // 1. Release physical keys
                 TextSelectionHelper.ReleaseModifiers();
 
-                // Get text based on mode
+                // 2. Capture text based on mode
                 string? text = await TextSelectionHelper.GetTextForConversion(settings.ConversionMode);
 
-                // Smart Fallback: If no text was highlighted, fallback to LastWord automatically
+                // Smart Fallback for SelectedText mode: If no text was highlighted, automatically fallback to Current Line or Last Word
                 if (string.IsNullOrWhiteSpace(text) && settings.ConversionMode == ConversionMode.SelectedText)
                 {
-                    text = await TextSelectionHelper.GetTextForConversion(ConversionMode.LastWord);
+                    // Fallback to current line first, then last word
+                    await TextSelectionHelper.SimulateSelectLine();
+                    text = await TextSelectionHelper.GetTextForConversion(ConversionMode.SelectedText);
+
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        await TextSelectionHelper.SimulateSelectLastWord();
+                        text = await TextSelectionHelper.GetTextForConversion(ConversionMode.SelectedText);
+                    }
                 }
 
                 if (string.IsNullOrWhiteSpace(text)) return;
 
-                // Convert text
+                // 3. Convert text bidirectionally (English -> Arabic OR Arabic -> English)
                 string converted;
                 if (settings.SmartDetectionEnabled)
                 {
@@ -84,18 +65,16 @@ namespace Munqith.Services
                     converted = LayoutConverter.Convert(text, settings.SelectedLayout);
                 }
 
+                // If conversion produces no change, ignore
                 if (converted == text) return;
 
-                // Store state for subsequent in-place toggles
-                _lastAlternateText = text;
-                _lastPastedText = converted;
-                _lastConversionTime = DateTime.UtcNow;
-
-                // Set clipboard and paste in place
+                // 4. Place converted text directly on clipboard
                 NativeClipboard.SetText(converted);
+
+                // 5. Paste directly into active window
                 await TextSelectionHelper.SimulatePaste();
 
-                // Record stats
+                // 6. Record stats
                 var result = new ConversionResult
                 {
                     OriginalText = text,
