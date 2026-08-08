@@ -1,3 +1,4 @@
+using System.Drawing.Drawing2D;
 using Munqith.Core;
 using Munqith.Hooks;
 using Munqith.Models;
@@ -52,7 +53,7 @@ namespace Munqith.UI
                 _trayIcon.Icon = SystemIcons.Shield;
             }
 
-            _trayIcon.Text = "مُنقِذ Munqith — أداة تصحيح لغة الكتابة";
+            _trayIcon.Text = "مُنقِذ Munqith";
             _trayIcon.Visible = true;
 
             CreateContextMenu();
@@ -62,33 +63,53 @@ namespace Munqith.UI
 
         public void CreateContextMenu()
         {
-            var menu = new ContextMenuStrip();
-            menu.Font = new Font("Segoe UI", 9.5f);
-            menu.RenderMode = ToolStripRenderMode.Professional;
-            menu.Renderer = new ModernTrayMenuRenderer(_settingsService.Settings.DarkMode);
-            menu.Padding = new Padding(4);
+            var menu = new ContextMenuStrip
+            {
+                ShowImageMargin = false,
+                ShowCheckMargin = false,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Regular),
+                Padding = new Padding(6),
+                DropShadowEnabled = true
+            };
 
-            // 1. Settings Item (Default bold)
-            var settingsItem = new ToolStripMenuItem("⚙️  لوحة التحكم والإعدادات (Settings)", null, (s, e) => ShowSettings());
-            settingsItem.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+            bool isDark = _settingsService.Settings.DarkMode;
+            bool isAr = _settingsService.Settings.Language == "ar";
+
+            menu.Renderer = new ClaudeTrayMenuRenderer(isDark);
+
+            // 1. Settings Header / Dashboard
+            var settingsItem = new ToolStripMenuItem(isAr ? "⚙️  لوحة التحكم والإعدادات" : "⚙️  Dashboard & Settings", null, (s, e) => ShowSettings())
+            {
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                Padding = new Padding(8, 6, 8, 6)
+            };
             menu.Items.Add(settingsItem);
 
-            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(new CustomMenuSeparator(isDark));
 
             // 2. Active Mode status
-            var scopeItem = new ToolStripMenuItem("🛡️  الوضع الذكي نشط (Smart Mode Active)", null, (s, e) => ShowSettings());
-            menu.Items.Add(scopeItem);
+            var statusItem = new ToolStripMenuItem(isAr ? "🟢  الوضع الذكي نشط وجاهز" : "🟢  Smart In-Place Mode Active", null, (s, e) => ShowSettings())
+            {
+                Padding = new Padding(8, 5, 8, 5)
+            };
+            menu.Items.Add(statusItem);
 
-            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(new CustomMenuSeparator(isDark));
 
             // 3. About
-            var aboutItem = new ToolStripMenuItem("ℹ️  عن أداة مُنقِذ (About)", null, (s, e) => ShowSettings());
+            var aboutItem = new ToolStripMenuItem(isAr ? "ℹ️  عن أداة مُنقِذ" : "ℹ️  About Munqith", null, (s, e) => ShowSettings())
+            {
+                Padding = new Padding(8, 5, 8, 5)
+            };
             menu.Items.Add(aboutItem);
 
-            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(new CustomMenuSeparator(isDark));
 
             // 4. Exit
-            var exitItem = new ToolStripMenuItem("❌  إغلاق البرنامج بالكامل (Exit)", null, (s, e) => ExitApplication());
+            var exitItem = new ToolStripMenuItem(isAr ? "❌  إغلاق البرنامج" : "❌  Exit Munqith", null, (s, e) => ExitApplication())
+            {
+                Padding = new Padding(8, 6, 8, 6)
+            };
             menu.Items.Add(exitItem);
 
             _trayIcon.ContextMenuStrip = menu;
@@ -128,49 +149,120 @@ namespace Munqith.UI
     }
 
     /// <summary>
-    /// Custom Modern Renderer for System Tray Context Menu
+    /// Custom Separator with sleek padding
     /// </summary>
-    public class ModernTrayMenuRenderer : ToolStripProfessionalRenderer
+    public class CustomMenuSeparator : ToolStripSeparator
     {
         private readonly bool _isDark;
 
-        public ModernTrayMenuRenderer(bool isDark) : base(new ModernColorTable(isDark))
+        public CustomMenuSeparator(bool isDark)
         {
             _isDark = isDark;
+            this.Margin = new Padding(4, 4, 4, 4);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Color sepColor = _isDark ? Color.FromArgb(50, 48, 44) : Color.FromArgb(230, 226, 221);
+            using var pen = new Pen(sepColor, 1);
+            int y = this.Height / 2;
+            e.Graphics.DrawLine(pen, 8, y, this.Width - 8, y);
+        }
+    }
+
+    /// <summary>
+    /// Ultra-Modern Claude AI Aesthetic Renderer for System Tray Context Menu
+    /// </summary>
+    public class ClaudeTrayMenuRenderer : ToolStripProfessionalRenderer
+    {
+        private readonly bool _isDark;
+        private readonly Color _bg;
+        private readonly Color _border;
+        private readonly Color _hoverBg;
+        private readonly Color _textPrimary;
+        private readonly Color _terracotta = Color.FromArgb(217, 119, 87);
+
+        public ClaudeTrayMenuRenderer(bool isDark) : base(new ClaudeColorTable(isDark))
+        {
+            _isDark = isDark;
+            if (_isDark)
+            {
+                _bg = Color.FromArgb(32, 30, 28);
+                _border = Color.FromArgb(60, 56, 52);
+                _hoverBg = Color.FromArgb(48, 44, 40);
+                _textPrimary = Color.FromArgb(250, 247, 242);
+            }
+            else
+            {
+                _bg = Color.FromArgb(253, 248, 243);
+                _border = Color.FromArgb(230, 226, 221);
+                _hoverBg = Color.FromArgb(244, 239, 234);
+                _textPrimary = Color.FromArgb(31, 31, 31);
+            }
+        }
+
+        protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e)
+        {
+            using var brush = new SolidBrush(_bg);
+            e.Graphics.FillRectangle(brush, e.AffectedBounds);
+        }
+
+        protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+        {
+            using var pen = new Pen(_border, 1.5f);
+            var rect = new Rectangle(0, 0, e.ToolStrip.Width - 1, e.ToolStrip.Height - 1);
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.DrawRectangle(pen, rect);
         }
 
         protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
         {
             if (e.Item.Selected)
             {
-                var rect = new Rectangle(2, 1, e.Item.Width - 4, e.Item.Height - 2);
-                Color hoverBg = _isDark ? Color.FromArgb(48, 54, 70) : Color.FromArgb(240, 235, 230);
-                using var brush = new SolidBrush(hoverBg);
-                e.Graphics.FillRectangle(brush, rect);
+                var rect = new Rectangle(4, 2, e.Item.Width - 8, e.Item.Height - 4);
+                using var path = CreateRoundedPath(rect, 6);
+                using var brush = new SolidBrush(_hoverBg);
+                using var pen = new Pen(Color.FromArgb(240, 213, 203), 1f);
+
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                e.Graphics.FillPath(brush, path);
             }
-            else
-            {
-                base.OnRenderMenuItemBackground(e);
-            }
+        }
+
+        protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+        {
+            e.TextColor = e.Item.Selected ? _terracotta : _textPrimary;
+            base.OnRenderItemText(e);
+        }
+
+        private static GraphicsPath CreateRoundedPath(Rectangle r, int radius)
+        {
+            var path = new GraphicsPath();
+            int d = radius * 2;
+            path.AddArc(r.X, r.Y, d, d, 180, 90);
+            path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+            path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+            path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
         }
     }
 
-    public class ModernColorTable : ProfessionalColorTable
+    public class ClaudeColorTable : ProfessionalColorTable
     {
         private readonly bool _isDark;
 
-        public ModernColorTable(bool isDark)
+        public ClaudeColorTable(bool isDark)
         {
             _isDark = isDark;
         }
 
-        public override Color ToolStripDropDownBackground => _isDark ? Color.FromArgb(28, 32, 44) : Color.FromArgb(253, 248, 243);
+        public override Color ToolStripDropDownBackground => _isDark ? Color.FromArgb(32, 30, 28) : Color.FromArgb(253, 248, 243);
         public override Color ImageMarginGradientBegin => ToolStripDropDownBackground;
         public override Color ImageMarginGradientMiddle => ToolStripDropDownBackground;
         public override Color ImageMarginGradientEnd => ToolStripDropDownBackground;
-        public override Color MenuBorder => _isDark ? Color.FromArgb(50, 58, 78) : Color.FromArgb(230, 226, 221);
-        public override Color SeparatorDark => _isDark ? Color.FromArgb(45, 52, 68) : Color.FromArgb(230, 226, 221);
-        public override Color SeparatorLight => Color.Transparent;
-        public override Color MenuItemSelected => _isDark ? Color.FromArgb(48, 54, 70) : Color.FromArgb(240, 235, 230);
+        public override Color MenuBorder => _isDark ? Color.FromArgb(60, 56, 52) : Color.FromArgb(230, 226, 221);
+        public override Color MenuItemSelected => _isDark ? Color.FromArgb(48, 44, 40) : Color.FromArgb(244, 239, 234);
+        public override Color MenuItemBorder => Color.Transparent;
     }
 }
