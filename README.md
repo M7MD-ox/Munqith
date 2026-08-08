@@ -34,7 +34,7 @@
 > **`الحمدلله رب العالمين`** ✅
 
 **مُنقِذ (Munqith)** هي الأداة اللي بتحميك من ضياع الوقت وإعاده الكتابة ، وشغاله كل مكان على نظام ويندوز!
-> *تم استلهام الفكره من اضافه [ Shaqlib | شقلب‬  ](#https://chromewebstore.google.com/detail/shaqlib-%D8%B4%D9%82%D9%84%D8%A8/maomcdklpgpgenbjkhogkkoakgcblfda.*
+> *تم استلهام الفكره من اضافه [ Shaqlib | شقلب‬  ](#https://chromewebstore.google.com/detail/shaqlib-%D8%B4%D9%82%D9%84%D8%A8/maomcdklpgpgenbjkhogkkoakgcblfda).*
 
 ---
 
