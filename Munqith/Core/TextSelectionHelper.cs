@@ -16,8 +16,9 @@ namespace Munqith.Core
             NativeMethods.keybd_event(NativeMethods.VK_Q_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
         }
 
-        public static async Task SimulateCopy()
+        public static async Task<string?> TryCopyCurrentSelection()
         {
+            NativeClipboard.Clear();
             ReleaseModifiers();
             await Task.Delay(MICRO_DELAY_MS);
 
@@ -29,6 +30,7 @@ namespace Munqith.Core
             NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
 
             await Task.Delay(MICRO_DELAY_MS * 2);
+            return NativeClipboard.GetText(maxRetries: 4, delayMs: 6);
         }
 
         public static async Task SimulatePaste()
@@ -46,8 +48,9 @@ namespace Munqith.Core
             await Task.Delay(MICRO_DELAY_MS);
         }
 
-        public static async Task SimulateSelectLine()
+        public static async Task<string?> TrySelectAndCopyLine()
         {
+            NativeClipboard.Clear();
             ReleaseModifiers();
             await Task.Delay(MICRO_DELAY_MS);
 
@@ -57,12 +60,15 @@ namespace Munqith.Core
             await Task.Delay(MICRO_DELAY_MS);
             NativeMethods.keybd_event(VK_HOME_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
             NativeMethods.keybd_event(NativeMethods.VK_SHIFT_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
-
             await Task.Delay(MICRO_DELAY_MS);
+
+            // Copy
+            return await TryCopyCurrentSelection();
         }
 
-        public static async Task SimulateSelectLastWord()
+        public static async Task<string?> TrySelectAndCopyLastWord()
         {
+            NativeClipboard.Clear();
             ReleaseModifiers();
             await Task.Delay(MICRO_DELAY_MS);
 
@@ -74,49 +80,66 @@ namespace Munqith.Core
             NativeMethods.keybd_event(NativeMethods.VK_LEFT_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
             NativeMethods.keybd_event(NativeMethods.VK_SHIFT_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
             NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
-
             await Task.Delay(MICRO_DELAY_MS);
+
+            // Copy
+            return await TryCopyCurrentSelection();
         }
 
-        public static async Task SimulateSelectAll()
+        public static async Task<string?> TrySelectAndCopyAll()
         {
+            NativeClipboard.Clear();
             ReleaseModifiers();
             await Task.Delay(MICRO_DELAY_MS);
 
-            // Press Ctrl + A (Select all text)
+            // Press Ctrl + A
             NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, 0, UIntPtr.Zero);
             NativeMethods.keybd_event(NativeMethods.VK_A_B, 0, 0, UIntPtr.Zero);
             await Task.Delay(MICRO_DELAY_MS);
             NativeMethods.keybd_event(NativeMethods.VK_A_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
             NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
-
             await Task.Delay(MICRO_DELAY_MS);
+
+            return await TryCopyCurrentSelection();
         }
 
         /// <summary>
-        /// Attempts to get text for conversion based on configured mode.
+        /// Captures text based on conversion mode with intelligent empty clipboard detection.
         /// </summary>
         public static async Task<string?> GetTextForConversion(ConversionMode mode)
         {
             switch (mode)
             {
                 case ConversionMode.SelectedText:
-                    // Try copying current selection first
-                    await SimulateCopy();
-                    break;
-                case ConversionMode.AllText:
-                    // Select current line or whole text
-                    await SimulateSelectLine();
-                    await SimulateCopy();
-                    break;
-                case ConversionMode.LastWord:
-                    // Select last word
-                    await SimulateSelectLastWord();
-                    await SimulateCopy();
-                    break;
-            }
+                    // 1. Try copying selected text
+                    string? text = await TryCopyCurrentSelection();
+                    // 2. If nothing was selected, fallback to line then word
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        text = await TrySelectAndCopyLine();
+                    }
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        text = await TrySelectAndCopyLastWord();
+                    }
+                    return text;
 
-            return NativeClipboard.GetText(maxRetries: 5, delayMs: 8);
+                case ConversionMode.AllText:
+                    // Current line mode
+                    string? lineText = await TrySelectAndCopyLine();
+                    if (string.IsNullOrWhiteSpace(lineText))
+                    {
+                        lineText = await TrySelectAndCopyAll();
+                    }
+                    return lineText;
+
+                case ConversionMode.LastWord:
+                    // Last word mode
+                    return await TrySelectAndCopyLastWord();
+
+                default:
+                    return await TryCopyCurrentSelection();
+            }
         }
     }
 }

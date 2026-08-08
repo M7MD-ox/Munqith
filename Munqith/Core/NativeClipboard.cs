@@ -35,7 +35,30 @@ namespace Munqith.Core
         private static extern IntPtr GlobalFree(IntPtr hMem);
 
         /// <summary>
-        /// Reads Unicode text from Windows clipboard with ultra-fast immediate attempt (8ms interval retry).
+        /// Clears the Windows clipboard so subsequent copy operations can be accurately verified.
+        /// </summary>
+        public static void Clear(int maxRetries = 5, int delayMs = 5)
+        {
+            for (int i = 0; i < maxRetries; i++)
+            {
+                if (OpenClipboard(IntPtr.Zero))
+                {
+                    try
+                    {
+                        EmptyClipboard();
+                        return;
+                    }
+                    finally
+                    {
+                        CloseClipboard();
+                    }
+                }
+                Thread.Sleep(delayMs);
+            }
+        }
+
+        /// <summary>
+        /// Reads Unicode text from Windows clipboard with ultra-fast immediate attempt.
         /// </summary>
         public static string? GetText(int maxRetries = 6, int delayMs = 8)
         {

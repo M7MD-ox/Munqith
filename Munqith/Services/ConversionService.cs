@@ -35,22 +35,8 @@ namespace Munqith.Services
                 // 1. Release physical keys
                 TextSelectionHelper.ReleaseModifiers();
 
-                // 2. Capture text based on mode
+                // 2. Capture text based on configured mode (Selected Text / Line / Word)
                 string? text = await TextSelectionHelper.GetTextForConversion(settings.ConversionMode);
-
-                // Smart Fallback for SelectedText mode: If no text was highlighted, automatically fallback to Current Line or Last Word
-                if (string.IsNullOrWhiteSpace(text) && settings.ConversionMode == ConversionMode.SelectedText)
-                {
-                    // Fallback to current line first, then last word
-                    await TextSelectionHelper.SimulateSelectLine();
-                    text = await TextSelectionHelper.GetTextForConversion(ConversionMode.SelectedText);
-
-                    if (string.IsNullOrWhiteSpace(text))
-                    {
-                        await TextSelectionHelper.SimulateSelectLastWord();
-                        text = await TextSelectionHelper.GetTextForConversion(ConversionMode.SelectedText);
-                    }
-                }
 
                 if (string.IsNullOrWhiteSpace(text)) return;
 
@@ -71,7 +57,7 @@ namespace Munqith.Services
                 // 4. Place converted text directly on clipboard
                 NativeClipboard.SetText(converted);
 
-                // 5. Paste directly into active window
+                // 5. Paste directly into active window in place
                 await TextSelectionHelper.SimulatePaste();
 
                 // 6. Record stats
