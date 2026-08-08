@@ -9,20 +9,39 @@ namespace Munqith.Services
 
         public static bool IsRegistered()
         {
-            using var key = Registry.CurrentUser.OpenSubKey(RegistryPath, false);
-            return key?.GetValue(AppName) != null;
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(RegistryPath, false);
+                return key?.GetValue(AppName) != null;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public static void Register()
         {
-            using var key = Registry.CurrentUser.OpenSubKey(RegistryPath, true);
-            key?.SetValue(AppName, $"\"{Application.ExecutablePath}\"");
+            try
+            {
+                string? exePath = Environment.ProcessPath ?? Application.ExecutablePath;
+                if (!string.IsNullOrEmpty(exePath))
+                {
+                    using var key = Registry.CurrentUser.OpenSubKey(RegistryPath, true);
+                    key?.SetValue(AppName, $"\"{exePath}\"");
+                }
+            }
+            catch { }
         }
 
         public static void Unregister()
         {
-            using var key = Registry.CurrentUser.OpenSubKey(RegistryPath, true);
-            key?.DeleteValue(AppName, false);
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(RegistryPath, true);
+                key?.DeleteValue(AppName, false);
+            }
+            catch { }
         }
 
         public static void SetStartup(bool enabled)

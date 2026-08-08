@@ -10,12 +10,22 @@ namespace Munqith.UI
 
         public SettingsForm(SettingsService settingsService, StatsService statsService, TrayApplicationContext trayContext)
         {
-            this.Text = "مُنقِذ — Munqith";
+            this.Text = "مُنقِذ Munqith";
             this.ClientSize = new Size(780, 740);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.BackColor = Color.FromArgb(253, 248, 243);
+
+            try
+            {
+                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "app.ico");
+                if (File.Exists(iconPath))
+                {
+                    this.Icon = new Icon(iconPath);
+                }
+            }
+            catch { }
 
             var services = new ServiceCollection();
             services.AddWindowsFormsBlazorWebView();

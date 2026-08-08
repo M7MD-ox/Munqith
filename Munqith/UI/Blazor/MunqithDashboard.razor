@@ -10,36 +10,75 @@
     <!-- Top Header -->
     <header class="app-header">
         <div class="brand-section">
-            <div class="brand-logo-badge">🛡️</div>
-            <div>
-                <h1 class="serif-heading brand-title">@(IsArabic ? "مُنقِذ" : "Munqith")</h1>
-                <span class="brand-status-pill">@(IsArabic ? "يعمل في الخلفية وجاهز للإنقاذ" : "Active in Background")</span>
-            </div>
+            <img src="Resources/app.ico" alt="Munqith Logo" class="brand-logo-img" onerror="this.style.display='none'" />
+            <h1 class="serif-heading brand-title">
+                @(IsArabic ? "مُنقِذ Munqith" : "Munqith")
+            </h1>
         </div>
 
         <div class="header-actions">
             <button class="claude-btn-secondary" @onclick="ToggleTheme">
-                @(IsDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode")
+                <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                @(IsDarkMode ? "Light Mode" : "Dark Mode")
             </button>
             <button class="claude-btn-secondary" @onclick="ToggleLanguage">
-                @(IsArabic ? "🌐 English" : "🌐 العربية")
+                <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                @(IsArabic ? "English" : "العربية")
             </button>
         </div>
     </header>
 
-    <!-- Navigation Tab Bar -->
+    <!-- Navigation Tab Bar with Crisp SVG Icons -->
     <nav class="nav-tab-bar">
         <button class="nav-tab-button @(ActiveTab == 0 ? "active" : "")" @onclick="() => SetTab(0)">
-            📊 @(IsArabic ? "الإحصائيات" : "Dashboard")
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            @(IsArabic ? "الإحصائيات" : "Dashboard")
         </button>
         <button class="nav-tab-button @(ActiveTab == 1 ? "active" : "")" @onclick="() => SetTab(1)">
-            ⚙️ @(IsArabic ? "الإعدادات" : "Settings")
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            @(IsArabic ? "الإعدادات" : "Settings")
         </button>
         <button class="nav-tab-button @(ActiveTab == 2 ? "active" : "")" @onclick="() => SetTab(2)">
-            ⌨️ @(IsArabic ? "الاختصارات" : "Hotkeys")
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                <line x1="6" y1="8" x2="6.01" y2="8"></line>
+                <line x1="10" y1="8" x2="10.01" y2="8"></line>
+                <line x1="14" y1="8" x2="14.01" y2="8"></line>
+                <line x1="18" y1="8" x2="18.01" y2="8"></line>
+                <line x1="6" y1="12" x2="6.01" y2="12"></line>
+                <line x1="18" y1="12" x2="18.01" y2="12"></line>
+                <line x1="7" y1="16" x2="17" y2="16"></line>
+            </svg>
+            @(IsArabic ? "الاختصارات" : "Hotkeys")
         </button>
         <button class="nav-tab-button @(ActiveTab == 3 ? "active" : "")" @onclick="() => SetTab(3)">
-            ℹ️ @(IsArabic ? "عن الأداة" : "About")
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            @(IsArabic ? "عن الأداة" : "About")
         </button>
     </nav>
 
@@ -56,7 +95,12 @@
             </div>
 
             <div class="claude-card hero-stats-card">
-                <div class="setting-title">@(IsArabic ? "إجمالي عدد مرات الإنقاذ حتى الآن" : "Total Typing Conversions")</div>
+                <div class="setting-title">
+                    <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    @(IsArabic ? "إجمالي عدد مرات الإنقاذ حتى الآن" : "Total Typing Conversions")
+                </div>
                 <div class="serif-heading hero-number-display">@StatsService.TotalConversions.ToString("N0")</div>
 
                 <div class="metrics-grid">
@@ -77,18 +121,29 @@
 
             <!-- Live Playground -->
             <div class="claude-card">
-                <h3 class="serif-heading" style="font-size: 18px; margin: 0 0 6px 0;">
-                    🧪 @(IsArabic ? "منطقة التجربة الفورية المباشرة" : "Live Converter Playground")
+                <h3 class="serif-heading" style="font-size: 18px; margin: 0 0 6px 0; display: flex; align-items: center; gap: 8px;">
+                    <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    @(IsArabic ? "منطقة التجربة الفورية المباشرة" : "Live Converter Playground")
                 </h3>
                 <p class="setting-desc" style="margin-bottom: 14px;">
                     @(IsArabic ? "اكتب أي نص ملخبط هنا واضغط الزر لاختبار التحويل والتقليب فوراً:" : "Type garbled English text below and click button to test instant bidirectional conversion:")
                 </p>
 
                 <div style="display: flex; gap: 10px; flex-direction: column;">
-                    <input type="text" class="claude-input" @bind="PlaygroundText" placeholder="hgf,hfm ,hpim" />
+                    <input type="text" class="claude-input" @bind="PlaygroundText" />
                     <div>
                         <button class="claude-btn-primary" @onclick="TestConversion">
-                            🔄 @(IsArabic ? "شقلب النص الآن" : "Convert Text Now")
+                            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            @(IsArabic ? "شقلب النص الآن" : "Convert Text Now")
                         </button>
                     </div>
                 </div>
@@ -104,7 +159,14 @@
             </div>
 
             <div class="info-banner-card">
-                <div class="banner-title">📌 @(IsArabic ? "طريقة الاستخدام الأساسية:" : "Default Usage Mode:")</div>
+                <div class="banner-title">
+                    <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    @(IsArabic ? "طريقة الاستخدام الأساسية:" : "Default Usage Mode:")
+                </div>
                 <p class="banner-text">
                     @(IsArabic
                         ? "حدد أي كلمة أو جملة بالماوس في أي برنامج واضغط Alt+Q أو Ctrl+Q ليتم تحويلها واستبدالها في نفس المكان فوراً!"
@@ -112,9 +174,17 @@
                 </p>
             </div>
 
+            <!-- Smart Detection Setting -->
             <div class="claude-card setting-row">
                 <div class="setting-texts">
-                    <div class="setting-title">🧠 @(IsArabic ? "الكشف الذكي للكلمات (Smart Vocabulary)" : "Smart Vocabulary Detection")</div>
+                    <div class="setting-title">
+                        <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a4 4 0 0 0-4 4v1a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z"></path>
+                            <path d="M6 10v1a6 6 0 0 0 12 0v-1"></path>
+                            <line x1="12" y1="19" x2="12" y2="22"></line>
+                        </svg>
+                        @(IsArabic ? "الكشف الذكي للكلمات (Smart Vocabulary)" : "Smart Vocabulary Detection")
+                    </div>
                     <p class="setting-desc">@(IsArabic ? "يحافظ على الكلمات الإنجليزية الصحيحة تلقائياً ويصحح فقط أخطاء الكتابة" : "Preserves real English words and only flips actual typing mistakes")</p>
                 </div>
                 <label class="claude-toggle">
@@ -123,9 +193,16 @@
                 </label>
             </div>
 
+            <!-- Launch on Startup Setting -->
             <div class="claude-card setting-row">
                 <div class="setting-texts">
-                    <div class="setting-title">🚀 @(IsArabic ? "التشغيل التلقائي مع فتح الجهاز" : "Launch on Windows Startup")</div>
+                    <div class="setting-title">
+                        <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
+                            <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
+                        </svg>
+                        @(IsArabic ? "التشغيل التلقائي مع فتح الجهاز" : "Launch on Windows Startup")
+                    </div>
                     <p class="setting-desc">@(IsArabic ? "تشغيل مُنقِذ تلقائياً في الخلفية عند فتح الويندوز" : "Automatically launch Munqith in the system tray when Windows boots up")</p>
                 </div>
                 <label class="claude-toggle">
@@ -134,15 +211,26 @@
                 </label>
             </div>
 
+            <!-- Instant Save Card -->
             <div class="claude-card setting-row" style="background-color: var(--bg-secondary);">
                 <div>
                     <button class="claude-btn-primary" @onclick="SaveAndApply">
-                        💾 @(IsArabic ? "حفظ وتطبيق الإعدادات فوراً" : "Save & Apply Instantly")
+                        <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        @(IsArabic ? "حفظ وتطبيق" : "Save & Apply")
                     </button>
                 </div>
                 @if (ShowSaveToast)
                 {
-                    <div class="save-toast">✅ @(IsArabic ? "تم الحفظ والتطبيق بنجاح!" : "Saved successfully!")</div>
+                    <div class="save-toast">
+                        <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        @(IsArabic ? "تم الحفظ والتطبيق بنجاح!" : "Saved & applied successfully!")
+                    </div>
                 }
             </div>
         }
@@ -166,6 +254,10 @@
                                 <span class="toggle-slider"></span>
                             </label>
                             <button class="claude-btn-danger" @onclick="() => DeleteHotkey(hk)">
+                                <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
                                 @(IsArabic ? "حذف" : "Delete")
                             </button>
                         </div>
@@ -176,7 +268,14 @@
             <div class="claude-card">
                 <div class="recorder-box @(IsListeningForKeys ? "listening" : "")" tabindex="0" @onclick="StartListening" @onkeydown="HandleKeyDown">
                     <span class="recorder-prompt">
-                        @(IsListeningForKeys ? (IsArabic ? "⏳ جاري الاستماع... اضغط مفاتيح الكيبورد الآن!" : "Listening... Press keys on keyboard now!") : (IsArabic ? "⌨️ اضغط هنا لتسجيل اختصار كيبورد جديد..." : "Click here to record a new keyboard shortcut..."))
+                        <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                            <line x1="6" y1="8" x2="6.01" y2="8"></line>
+                            <line x1="10" y1="8" x2="10.01" y2="8"></line>
+                            <line x1="14" y1="8" x2="14.01" y2="8"></line>
+                            <line x1="18" y1="8" x2="18.01" y2="8"></line>
+                        </svg>
+                        @(IsListeningForKeys ? (IsArabic ? "جاري الاستماع... اضغط مفاتيح الكيبورد الآن!" : "Listening... Press keys on keyboard now!") : (IsArabic ? "اضغط هنا لتسجيل اختصار كيبورد جديد..." : "Click here to record a new keyboard shortcut..."))
                     </span>
                 </div>
             </div>
@@ -184,12 +283,38 @@
         else if (ActiveTab == 3)
         {
             <div class="claude-card">
-                <h3 class="serif-heading" style="font-size: 22px; color: var(--terracotta); margin: 0 0 12px 0;">🛡️ مُنقِذ — Munqith v1.0.0</h3>
-                <p style="font-size: 14.5px; line-height: 1.6;">
+                <h3 class="serif-heading" style="font-size: 22px; color: var(--terracotta); margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                    <svg class="svg-icon" style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    @(IsArabic ? "مُنقِذ — Munqith v1.0.0" : "Munqith v1.0.0")
+                </h3>
+                
+                <p style="font-size: 14.5px; line-height: 1.7; margin: 0 0 14px 0;">
                     @(IsArabic
                         ? "أداة ويندوز ذكية وفائقة السرعة تعمل في الخلفية لتصحيح لغة الكتابة تلقائياً في كافة البرامج والمتصفحات بضغطة اختصار واحدة، دون الحاجة لإعادة كتابة النص من جديد."
                         : "Fast, lightweight Windows utility running in the background to instantly auto-correct mistyped keyboard layouts across all Windows apps and browsers with a single hotkey.")
                 </p>
+
+                <!-- Dedicated Free for Allah notice -->
+                <div style="background-color: var(--terracotta-light); border: 1px solid var(--terracotta-border); color: var(--terracotta-active); padding: 14px 18px; border-radius: var(--radius-md); font-weight: 600; font-size: 14px; margin-bottom: 18px; line-height: 1.6;">
+                    @(IsArabic 
+                        ? "✨ هذه الأداة مجانية بالكامل ومفتوحة المصدر لوجه الله تعالى، ولا نرجو سوى الدعاء الصالح بظهر الغيب."
+                        : "✨ This application is completely free and open-source for the sake of Allah. We only ask for your sincere prayers.")
+                </div>
+
+                <div style="background-color: var(--bg-secondary); padding: 14px 18px; border-radius: var(--radius-md); font-size: 13.5px; line-height: 1.8; margin-bottom: 20px;">
+                    <div>• <strong>@(IsArabic ? "نظام التشغيل:" : "OS:")</strong> Windows 10 / Windows 11 (64-bit)</div>
+                    <div>• <strong>@(IsArabic ? "التقنية:" : "Tech Stack:")</strong> C# .NET 8.0 & Blazor Hybrid</div>
+                    <div>• <strong>@(IsArabic ? "محرك الاستجابة:" : "Latency:")</strong> Win32 Low-Level Hook + Native Clipboard (&lt;30ms)</div>
+                </div>
+
+                <a href="https://github.com" target="_blank" class="claude-btn-primary" style="text-decoration: none;">
+                    <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                    </svg>
+                    GitHub Repository
+                </a>
             </div>
         }
     </main>
@@ -203,7 +328,7 @@
     private int ActiveTab = 0;
     private bool IsDarkMode;
     private bool IsArabic;
-    private string PlaygroundText = "hgf,hfm ,hpim";
+    private string PlaygroundText = "hgpl]ggi";
     private bool ShowSaveToast = false;
     private bool IsListeningForKeys = false;
 
