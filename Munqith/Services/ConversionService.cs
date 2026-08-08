@@ -24,8 +24,9 @@ namespace Munqith.Services
 
             try
             {
-                // Small delay to let hotkey keys release
-                await Task.Delay(80);
+                // Wait briefly for physical modifier keys to settle
+                TextSelectionHelper.ReleaseModifiers();
+                await Task.Delay(50);
 
                 // Try configured conversion mode first
                 string? text = await TextSelectionHelper.GetTextForConversion(settings.ConversionMode);
@@ -41,7 +42,7 @@ namespace Munqith.Services
                 // Check for Undo: if text matches last converted text, restore original
                 if (_lastConvertedText != null && text.Trim() == _lastConvertedText.Trim())
                 {
-                    ClipboardHelper.SetText(_lastOriginalText!);
+                    NativeClipboard.SetText(_lastOriginalText!);
                     await TextSelectionHelper.SimulatePaste();
                     _lastOriginalText = null;
                     _lastConvertedText = null;
@@ -66,8 +67,11 @@ namespace Munqith.Services
                 _lastOriginalText = text;
                 _lastConvertedText = converted;
 
+                // Set text directly into Windows clipboard with Native Win32 API
+                NativeClipboard.SetText(converted);
+                await Task.Delay(30);
+
                 // Paste converted text into active window
-                ClipboardHelper.SetText(converted);
                 await TextSelectionHelper.SimulatePaste();
 
                 // Record stats

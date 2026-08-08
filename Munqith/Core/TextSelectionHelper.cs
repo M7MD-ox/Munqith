@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Munqith.Hooks;
 using Munqith.Models;
 
@@ -6,43 +5,52 @@ namespace Munqith.Core
 {
     public static class TextSelectionHelper
     {
-        private const int KEY_DELAY_MS = 30;
+        private const int KEY_DELAY_MS = 40;
 
         /// <summary>
-        /// Release physical modifier keys if held so SendInput keyboard shortcuts fire cleanly
+        /// Release physical modifier keys if held so key simulation executes cleanly.
         /// </summary>
         public static void ReleaseModifiers()
         {
-            var inputs = new List<NativeMethods.INPUT>();
+            // Release Control
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            // Release Alt
+            NativeMethods.keybd_event(NativeMethods.VK_MENU_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            // Release Shift
+            NativeMethods.keybd_event(NativeMethods.VK_SHIFT_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            // Release Q
+            NativeMethods.keybd_event(NativeMethods.VK_Q_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
 
-            if ((NativeMethods.GetKeyState((int)Keys.ControlKey) & 0x8000) != 0)
-                inputs.Add(CreateKeyInput(NativeMethods.VK_CONTROL, true));
-
-            if ((NativeMethods.GetKeyState((int)Keys.Menu) & 0x8000) != 0)
-                inputs.Add(CreateKeyInput(NativeMethods.VK_MENU, true));
-
-            if ((NativeMethods.GetKeyState((int)Keys.ShiftKey) & 0x8000) != 0)
-                inputs.Add(CreateKeyInput(NativeMethods.VK_SHIFT, true));
-
-            if (inputs.Count > 0)
-            {
-                NativeMethods.SendInput((uint)inputs.Count, inputs.ToArray(), Marshal.SizeOf<NativeMethods.INPUT>());
-            }
+            Thread.Sleep(KEY_DELAY_MS);
         }
 
         public static async Task SimulateCopy()
         {
             ReleaseModifiers();
             await Task.Delay(KEY_DELAY_MS);
-            SendKeyCombo(NativeMethods.VK_CONTROL, NativeMethods.VK_C);
-            await Task.Delay(KEY_DELAY_MS * 3);
+
+            // Press Ctrl + C
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, 0, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_C_B, 0, 0, UIntPtr.Zero);
+            await Task.Delay(25);
+            NativeMethods.keybd_event(NativeMethods.VK_C_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+
+            await Task.Delay(KEY_DELAY_MS * 2);
         }
 
         public static async Task SimulatePaste()
         {
             ReleaseModifiers();
             await Task.Delay(KEY_DELAY_MS);
-            SendKeyCombo(NativeMethods.VK_CONTROL, NativeMethods.VK_V);
+
+            // Press Ctrl + V
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, 0, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_V_B, 0, 0, UIntPtr.Zero);
+            await Task.Delay(25);
+            NativeMethods.keybd_event(NativeMethods.VK_V_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+
             await Task.Delay(KEY_DELAY_MS);
         }
 
@@ -50,7 +58,14 @@ namespace Munqith.Core
         {
             ReleaseModifiers();
             await Task.Delay(KEY_DELAY_MS);
-            SendKeyCombo(NativeMethods.VK_CONTROL, NativeMethods.VK_A);
+
+            // Press Ctrl + A
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, 0, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_A_B, 0, 0, UIntPtr.Zero);
+            await Task.Delay(25);
+            NativeMethods.keybd_event(NativeMethods.VK_A_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+
             await Task.Delay(KEY_DELAY_MS);
         }
 
@@ -59,15 +74,15 @@ namespace Munqith.Core
             ReleaseModifiers();
             await Task.Delay(KEY_DELAY_MS);
 
-            var inputs = new NativeMethods.INPUT[6];
-            inputs[0] = CreateKeyInput(NativeMethods.VK_CONTROL, false);
-            inputs[1] = CreateKeyInput(NativeMethods.VK_SHIFT, false);
-            inputs[2] = CreateKeyInput(NativeMethods.VK_LEFT, false);
-            inputs[3] = CreateKeyInput(NativeMethods.VK_LEFT, true);
-            inputs[4] = CreateKeyInput(NativeMethods.VK_SHIFT, true);
-            inputs[5] = CreateKeyInput(NativeMethods.VK_CONTROL, true);
+            // Press Ctrl + Shift + Left
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, 0, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_SHIFT_B, 0, 0, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_LEFT_B, 0, 0, UIntPtr.Zero);
+            await Task.Delay(25);
+            NativeMethods.keybd_event(NativeMethods.VK_LEFT_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_SHIFT_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL_B, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
 
-            NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<NativeMethods.INPUT>());
             await Task.Delay(KEY_DELAY_MS);
         }
 
@@ -87,36 +102,8 @@ namespace Munqith.Core
                     await SimulateCopy();
                     break;
             }
-            return ClipboardHelper.GetText();
-        }
 
-        private static void SendKeyCombo(ushort modifier, ushort key)
-        {
-            var inputs = new NativeMethods.INPUT[4];
-            inputs[0] = CreateKeyInput(modifier, false);
-            inputs[1] = CreateKeyInput(key, false);
-            inputs[2] = CreateKeyInput(key, true);
-            inputs[3] = CreateKeyInput(modifier, true);
-            NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<NativeMethods.INPUT>());
-        }
-
-        private static NativeMethods.INPUT CreateKeyInput(ushort vkCode, bool keyUp)
-        {
-            return new NativeMethods.INPUT
-            {
-                type = NativeMethods.INPUT_KEYBOARD,
-                u = new NativeMethods.INPUTUNION
-                {
-                    ki = new NativeMethods.KEYBDINPUT
-                    {
-                        wVk = vkCode,
-                        wScan = 0,
-                        dwFlags = keyUp ? NativeMethods.KEYEVENTF_KEYUP : 0,
-                        time = 0,
-                        dwExtraInfo = IntPtr.Zero
-                    }
-                }
-            };
+            return NativeClipboard.GetText(maxRetries: 10, delayMs: 30);
         }
     }
 }

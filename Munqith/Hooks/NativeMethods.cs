@@ -19,15 +19,14 @@ namespace Munqith.Hooks
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr GetModuleHandle(string lpModuleName);
 
-        /// <summary>
-        /// GetAsyncKeyState returns real-time physical key state across all OS threads.
-        /// High-order bit (0x8000) is set if key is down.
-        /// </summary>
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
 
         [DllImport("user32.dll")]
         public static extern short GetKeyState(int nVirtKey);
+
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
@@ -55,13 +54,15 @@ namespace Munqith.Hooks
         public const uint KEYEVENTF_KEYUP = 0x0002;
         public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
 
-        public const ushort VK_CONTROL = 0x11;
-        public const ushort VK_SHIFT = 0x10;
-        public const ushort VK_MENU = 0x12; // Alt
-        public const ushort VK_A = 0x41;
-        public const ushort VK_C = 0x43;
-        public const ushort VK_V = 0x56;
-        public const ushort VK_LEFT = 0x25;
+        // Virtual Key byte codes for keybd_event
+        public const byte VK_CONTROL_B = 0x11;
+        public const byte VK_SHIFT_B = 0x10;
+        public const byte VK_MENU_B = 0x12; // Alt
+        public const byte VK_C_B = 0x43;
+        public const byte VK_V_B = 0x56;
+        public const byte VK_A_B = 0x41;
+        public const byte VK_LEFT_B = 0x25;
+        public const byte VK_Q_B = 0x51;
 
         [StructLayout(LayoutKind.Sequential)]
         public struct INPUT
