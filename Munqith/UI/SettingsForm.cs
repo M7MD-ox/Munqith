@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Components.WebView.WindowsForms;
-using Munqith.Services;
 
 namespace Munqith.UI
 {
     public class SettingsForm : Form
     {
         private readonly BlazorWebView _blazorWebView;
+
+        public bool AllowClose { get; set; } = false;
 
         public SettingsForm(IServiceProvider serviceProvider)
         {
@@ -35,6 +36,18 @@ namespace Munqith.UI
 
             _blazorWebView.RootComponents.Add<Munqith.UI.Blazor.MunqithDashboard>("#app");
             this.Controls.Add(_blazorWebView);
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (!AllowClose && e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                this.Hide();
+                return;
+            }
+
+            base.OnFormClosing(e);
         }
     }
 }

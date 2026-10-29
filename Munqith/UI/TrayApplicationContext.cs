@@ -106,7 +106,11 @@ namespace Munqith.UI
 
         private async void OnHotkeyTriggered(HotkeyBinding binding)
         {
-            await _conversionService.PerformConversion();
+            try
+            {
+                await _conversionService.PerformConversion();
+            }
+            catch { }
         }
 
         public void ShowSettings()
@@ -126,6 +130,14 @@ namespace Munqith.UI
         {
             _keyboardHook.Stop();
             _keyboardHook.Dispose();
+
+            if (_settingsForm != null && !_settingsForm.IsDisposed)
+            {
+                _settingsForm.AllowClose = true;
+                _settingsForm.Close();
+                _settingsForm.Dispose();
+            }
+
             _trayIcon.Visible = false;
             _trayIcon.Dispose();
             Application.Exit();

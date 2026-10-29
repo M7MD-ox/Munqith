@@ -5,6 +5,9 @@ namespace Munqith.Services
     public class StatsService : IStatsService
     {
         private readonly ISettingsService _settingsService;
+        private readonly object _statsLock = new();
+
+        public event Action? StatsUpdated;
 
         public StatsService(ISettingsService settingsService)
         {
@@ -42,12 +45,18 @@ namespace Munqith.Services
         public void RecordConversion(ConversionResult result)
         {
             if (!result.WasConverted) return;
-            _settingsService.Settings.TotalConversions++;
-            _settingsService.Settings.TotalCharactersConverted += result.CharacterCount;
-            _settingsService.Settings.TotalWordsConverted += result.WordCount;
-            double timeSaved = result.CharacterCount / 3.3;
-            _settingsService.Settings.TotalTimeSavedSeconds += timeSaved;
-            _settingsService.Save();
+
+            lock (_statsLock)
+            {
+                _settingsService.Settings.TotalConversions++;
+                _settingsService.Settings.TotalCharactersConverted += result.CharacterCount;
+                _settingsService.Settings.TotalWordsConverted += result.WordCount;
+                double timeSaved = result.CharacterCount / 3.3;
+                _settingsService.Settings.TotalTimeSavedSeconds += timeSaved;
+                _settingsService.Save();
+            }
+
+            StatsUpdated?.Invoke();
         }
     }
 }

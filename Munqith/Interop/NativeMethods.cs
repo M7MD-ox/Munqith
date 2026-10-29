@@ -17,13 +17,13 @@ namespace Munqith.Interop
         public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern IntPtr GetModuleHandle(string lpModuleName);
+        public static extern IntPtr GetModuleHandle(string? lpModuleName);
 
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
 
-        [DllImport("user32.dll")]
-        public static extern short GetKeyState(int nVirtKey);
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
         [DllImport("user32.dll")]
         public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
@@ -55,22 +55,73 @@ namespace Munqith.Interop
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr GlobalFree(IntPtr hMem);
 
-        // Virtual Key byte codes for keyboard simulation
-        public const byte VK_SHIFT_B = 0x10;
-        public const byte VK_CONTROL_B = 0x11;
-        public const byte VK_MENU_B = 0x12; // Alt
-        public const byte VK_HOME_B = 0x24;
-        public const byte VK_LEFT_B = 0x25;
-        public const byte VK_C_B = 0x43;
-        public const byte VK_Q_B = 0x51;
-        public const byte VK_V_B = 0x56;
+        // Virtual Key codes
+        public const ushort VK_SHIFT = 0x10;
+        public const ushort VK_CONTROL = 0x11;
+        public const ushort VK_MENU = 0x12; // Alt
+        public const ushort VK_F10 = 0x79;
+        public const ushort VK_LSHIFT = 0xA0;
+        public const ushort VK_RSHIFT = 0xA1;
+        public const ushort VK_LCONTROL = 0xA2;
+        public const ushort VK_RCONTROL = 0xA3;
+        public const ushort VK_LMENU = 0xA4;
+        public const ushort VK_RMENU = 0xA5;
+        public const ushort VK_C = 0x43;
+        public const ushort VK_Q = 0x51;
+        public const ushort VK_V = 0x56;
 
+        public const int INPUT_KEYBOARD = 1;
         public const uint KEYEVENTF_KEYUP = 0x0002;
+
         public const uint CF_UNICODETEXT = 13;
         public const uint GMEM_MOVEABLE = 0x0002;
 
         public const int WH_KEYBOARD_LL = 13;
         public const int WM_KEYDOWN = 0x0100;
         public const int WM_SYSKEYDOWN = 0x0104;
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct INPUT
+        {
+            public uint type;
+            public INPUTUNION U;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct INPUTUNION
+        {
+            [FieldOffset(0)] public MOUSEINPUT mi;
+            [FieldOffset(0)] public KEYBDINPUT ki;
+            [FieldOffset(0)] public HARDWAREINPUT hi;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public uint dwFlags;
+            public uint time;
+            public UIntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KEYBDINPUT
+        {
+            public ushort wVk;
+            public ushort wScan;
+            public uint dwFlags;
+            public uint time;
+            public UIntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct HARDWAREINPUT
+        {
+            public uint uMsg;
+            public ushort wParamL;
+            public ushort wParamH;
+        }
     }
 }

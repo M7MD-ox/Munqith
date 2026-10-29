@@ -2,6 +2,8 @@
 bin/
 obj/
 publish/
+Releases/
+*.zip
 .vs/
 *.user
 *.userosscache

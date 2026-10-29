@@ -4,6 +4,7 @@ namespace Munqith.Services
 {
     public interface IStatsService
     {
+        event Action? StatsUpdated;
         int TotalConversions { get; }
         int TotalCharacters { get; }
         int TotalWords { get; }

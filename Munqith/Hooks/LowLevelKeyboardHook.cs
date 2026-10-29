@@ -7,7 +7,7 @@ namespace Munqith.Hooks
 {
     public class LowLevelKeyboardHook : IKeyboardHook
     {
-        private NativeMethods.HookProc _proc;
+        private readonly NativeMethods.HookProc _proc;
         private IntPtr _hookID = IntPtr.Zero;
 
         public event Action<HotkeyBinding>? HotkeyTriggered;
@@ -32,12 +32,15 @@ namespace Munqith.Hooks
         {
             if (_hookID == IntPtr.Zero)
             {
-                IntPtr hInstance = NativeMethods.GetModuleHandle("user32.dll");
+                using Process curProcess = Process.GetCurrentProcess();
+                using ProcessModule? curModule = curProcess.MainModule;
+                IntPtr hInstance = curModule != null
+                    ? NativeMethods.GetModuleHandle(curModule.ModuleName)
+                    : IntPtr.Zero;
+
                 if (hInstance == IntPtr.Zero)
                 {
-                    using Process curProcess = Process.GetCurrentProcess();
-                    using ProcessModule curModule = curProcess.MainModule!;
-                    hInstance = NativeMethods.GetModuleHandle(curModule.ModuleName);
+                    hInstance = NativeMethods.GetModuleHandle("user32.dll");
                 }
 
                 _hookID = NativeMethods.SetWindowsHookEx(
@@ -65,10 +68,10 @@ namespace Munqith.Hooks
                 int vkCode = Marshal.ReadInt32(lParam);
                 Keys key = (Keys)vkCode;
 
-                // Check physical modifier state asynchronously via GetAsyncKeyState
-                bool ctrl = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_CONTROL_B) & 0x8000) != 0;
-                bool alt = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU_B) & 0x8000) != 0 || message == NativeMethods.WM_SYSKEYDOWN;
-                bool shift = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT_B) & 0x8000) != 0;
+                bool ctrl = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_CONTROL) & 0x8000) != 0;
+                bool alt = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU) & 0x8000) != 0 ||
+                           (message == NativeMethods.WM_SYSKEYDOWN && vkCode != NativeMethods.VK_F10);
+                bool shift = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0;
 
                 int currentModifiers = 0;
                 if (alt) currentModifiers |= 1;
@@ -94,7 +97,7 @@ namespace Munqith.Hooks
                 if (matchedBinding != null)
                 {
                     Task.Run(() => HotkeyTriggered?.Invoke(matchedBinding));
-                    return (IntPtr)1; // Consume key
+                    return (IntPtr)1; // Consume hotkey press
                 }
             }
 

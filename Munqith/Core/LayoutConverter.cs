@@ -7,43 +7,71 @@ namespace Munqith.Core
         public static readonly LayoutConverter Instance = new();
 
         /// <summary>
-        /// Detects whether text contains primarily English or Arabic characters.
+        /// Detects whether text contains primarily English QWERTY keys (including keys like ',' -> 'و', '[' -> 'ج', ']' -> 'د', ';' -> 'ك')
+        /// versus Arabic Unicode characters.
         /// </summary>
         public bool IsEnglishText(string text)
         {
             if (string.IsNullOrEmpty(text)) return true;
 
-            int english = 0, arabic = 0;
+            int englishLetters = 0;
+            int englishArabicKeyPunct = 0;
+            int arabicLetters = 0;
+
             foreach (char c in text)
             {
-                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) english++;
-                else if (c >= '\u0600' && c <= '\u06FF') arabic++;
+                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+                {
+                    englishLetters++;
+                }
+                else if (IsArabicChar(c))
+                {
+                    arabicLetters++;
+                }
+                else if (KeyboardMaps.EnglishPunctuationMappedToArabicLetters.Contains(c))
+                {
+                    englishArabicKeyPunct++;
+                }
             }
-            return english > arabic;
+
+            if (arabicLetters == 0 && (englishLetters > 0 || englishArabicKeyPunct > 0))
+            {
+                return true;
+            }
+
+            return englishLetters > arabicLetters;
+        }
+
+        public static bool IsArabicChar(char c)
+        {
+            return (c >= '\u0600' && c <= '\u06FF') ||
+                   (c >= '\u0750' && c <= '\u077F') ||
+                   (c >= '\uFB50' && c <= '\uFDFF') ||
+                   (c >= '\uFE70' && c <= '\uFEFF');
         }
 
         /// <summary>
         /// Auto-detect direction and convert text.
         /// </summary>
-        public string Convert(string text, KeyboardLayout layout)
+        public string Convert(string text)
         {
             bool toArabic = IsEnglishText(text);
-            return Convert(text, layout, toArabic);
+            return Convert(text, toArabic);
         }
 
         /// <summary>
         /// Convert text in a specified direction.
         /// </summary>
-        public string Convert(string text, KeyboardLayout layout, bool toArabic)
+        public string Convert(string text, bool toArabic)
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
 
-            return toArabic ? ConvertToArabic(text, layout) : ConvertToEnglish(text, layout);
+            return toArabic ? ConvertToArabic(text) : ConvertToEnglish(text);
         }
 
-        private static string ConvertToArabic(string text, KeyboardLayout layout)
+        private static string ConvertToArabic(string text)
         {
-            var map = KeyboardMaps.GetMap(layout, true);
+            var map = KeyboardMaps.EnglishToWindowsArabic;
             var multiMap = KeyboardMaps.EnToArMulti;
             var sb = new StringBuilder(text.Length);
 
@@ -65,16 +93,16 @@ namespace Munqith.Core
             return sb.ToString();
         }
 
-        private static string ConvertToEnglish(string text, KeyboardLayout layout)
+        private static string ConvertToEnglish(string text)
         {
-            var map = KeyboardMaps.GetMap(layout, false);
+            var map = KeyboardMaps.WindowsArabicToEnglish;
             var multiMap = KeyboardMaps.ArToEnMulti;
             var sb = new StringBuilder(text.Length);
 
             for (int i = 0; i < text.Length; i++)
             {
-                // Check 2-char sequences first (لا, لإ, لأ, لآ)
-                if (i + 1 < text.Length)
+                // 1. Check 2-char sequences first (لا, لإ, لأ, لآ) when current char is Lam (\u0644)
+                if (text[i] == '\u0644' && i + 1 < text.Length)
                 {
                     string twoChars = text.Substring(i, 2);
                     if (multiMap.TryGetValue(twoChars, out char multiResult))
@@ -85,6 +113,18 @@ namespace Munqith.Core
                     }
                 }
 
+                // 2. Check single-char Unicode presentation forms for Lam-Alef (ﻻ, ﻷ, ﻹ, ﻵ)
+                if (text[i] >= '\uFEF5' && text[i] <= '\uFEFC')
+                {
+                    string oneChar = text[i].ToString();
+                    if (multiMap.TryGetValue(oneChar, out char presentationResult))
+                    {
+                        sb.Append(presentationResult);
+                        continue;
+                    }
+                }
+
+                // 3. Standard single-char mapping
                 if (map.TryGetValue(text[i], out char mapped))
                 {
                     sb.Append(mapped);

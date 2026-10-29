@@ -41,28 +41,25 @@ namespace Munqith.Services
                 _isConverting = true;
             }
 
+            string? previousClipboardText = null;
+            bool pastedConvertedText = false;
+
             try
             {
                 var settings = _settingsService.Settings;
 
-                // 1. Release physical keys
-                _textSelectionService.ReleaseModifiers();
+                // 1. Backup existing text on clipboard so user doesn't lose copied data if nothing is selected
+                previousClipboardText = _clipboard.GetText(maxRetries: 2, delayMs: 4);
 
-                // 2. Capture text
+                // 2. Capture highlighted text
                 string? text = await _textSelectionService.GetTextForConversion();
 
                 if (string.IsNullOrWhiteSpace(text)) return;
 
                 // 3. Convert text bidirectionally (English -> Arabic OR Arabic -> English)
-                string converted;
-                if (settings.SmartDetectionEnabled)
-                {
-                    converted = _smartDetector.SmartConvert(text, KeyboardLayout.WindowsArabicPC);
-                }
-                else
-                {
-                    converted = _layoutConverter.Convert(text, KeyboardLayout.WindowsArabicPC);
-                }
+                string converted = settings.SmartDetectionEnabled
+                    ? _smartDetector.SmartConvert(text)
+                    : _layoutConverter.Convert(text);
 
                 // If conversion produces no change, ignore
                 if (converted == text) return;
@@ -72,6 +69,7 @@ namespace Munqith.Services
 
                 // 5. Paste directly into active window in place
                 await _textSelectionService.SimulatePaste();
+                pastedConvertedText = true;
 
                 // 6. Record stats
                 var result = new ConversionResult
@@ -88,6 +86,21 @@ namespace Munqith.Services
             catch { }
             finally
             {
+                try
+                {
+                    // Restore user's original clipboard text if no conversion occurred,
+                    // or after waiting briefly for the target app to finish pasting.
+                    if (!string.IsNullOrEmpty(previousClipboardText))
+                    {
+                        if (pastedConvertedText)
+                        {
+                            await Task.Delay(50);
+                        }
+                        _clipboard.SetText(previousClipboardText, maxRetries: 3, delayMs: 5);
+                    }
+                }
+                catch { }
+
                 lock (_lockObj)
                 {
                     _isConverting = false;

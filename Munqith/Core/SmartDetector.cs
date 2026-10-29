@@ -9,74 +9,34 @@ namespace Munqith.Core
 
         private readonly ILayoutConverter _layoutConverter;
 
+        /// <summary>
+        /// Unambiguous English words (4+ chars and specific tech acronyms) that do not collide
+        /// with common Arabic words when typed on an English QWERTY layout.
+        /// </summary>
         private static readonly HashSet<string> CommonEnglishWords = new(StringComparer.OrdinalIgnoreCase)
         {
-            "the", "be", "to", "of", "and", "in", "that", "have", "it", "for",
-            "not", "on", "with", "he", "as", "you", "do", "at", "this", "but",
-            "his", "by", "from", "they", "we", "say", "her", "she", "or", "an",
-            "will", "my", "one", "all", "would", "there", "their", "what", "so", "up",
-            "out", "if", "about", "who", "get", "which", "go", "me", "when", "make",
-            "can", "like", "time", "no", "just", "him", "know", "take", "people", "into",
-            "year", "your", "good", "some", "could", "them", "see", "other", "than", "then",
-            "now", "look", "only", "come", "its", "over", "think", "also", "back", "after",
-            "use", "two", "how", "our", "work", "first", "well", "way", "even", "new",
-            "want", "because", "any", "these", "give", "day", "most", "us", "great", "big",
-            "long", "much", "world", "old", "right", "still", "find", "here", "thing", "many",
-            "live", "high", "last", "own", "house", "help", "need", "start", "keep", "name",
-            "read", "small", "run", "end", "does", "set", "try", "ask", "went", "men",
-            "put", "play", "home", "call", "hand", "move", "been", "where", "down", "should",
-            "may", "part", "place", "every", "head", "school", "again", "never", "change", "letter",
-            "city", "next", "mean", "before", "number", "open", "group", "write", "under", "story",
-            "car", "food", "area", "left", "water", "white", "room", "mother", "light", "door",
-            "point", "book", "study", "word", "life", "paper", "money", "game", "side", "line",
-            "close", "body", "girl", "power", "music", "woman", "boy", "sure", "table", "face",
-            "horse", "watch", "color", "south", "night", "north", "center", "drive", "field", "town",
-            "stand", "land", "turn", "voice", "morning", "class", "dog", "fish", "love", "road",
-            "heart", "hold", "picture", "bring", "stop", "hard", "late", "father", "question", "family",
-            "real", "best", "rock", "talk", "hear", "air", "example", "fire", "eye", "children",
-            "plan", "eat", "tree", "second", "beautiful", "cut", "ground", "green", "hundred", "above",
-            "test", "island", "state", "west", "ever", "east", "red", "reach", "street", "sleep",
-            "snow", "bed", "mark", "dream", "mile", "half", "fly", "build", "true", "full",
-            "farm", "rest", "boat", "river", "fall", "ship", "front", "song", "age", "dark",
-            "warm", "top", "cold", "hot", "fast", "walk", "six", "cross", "four", "sit",
-            "ride", "able", "draw", "animal", "step", "bit", "bird", "began", "few", "round",
-            "act", "month", "sent", "ball", "led", "king", "carry", "sun", "sat", "main",
-            "ran", "ear", "fill", "push", "lot", "wide", "told", "wind", "join", "sign",
-            "gold", "cost", "deep", "egg", "born", "hit", "check", "oil", "ring", "queen",
-            "box", "miss", "foot", "sell", "seem", "meet", "sea", "wait", "past", "size",
-            "low", "hour", "war", "lay", "add", "wife", "hat", "pay", "rain", "pick",
-            "lift", "mix", "let", "tie", "iron", "tool", "press", "leg", "brown", "trip",
-            "save", "store", "pair", "fresh", "total", "type", "spring", "flat", "shall", "speed",
-            "deal", "stone", "sort", "band", "key", "rose", "bar", "match", "bank", "mine",
-            "art", "bread", "camp", "fat", "rich", "sand", "ten", "nine", "lead", "thin",
-            "string", "block", "fine", "coat", "shape", "lake", "inch", "page", "feed", "felt",
-            "wave", "beat", "wonder", "list", "touch", "huge", "spot", "wild", "board", "shop",
-            "army", "track", "lost", "heat", "break", "jump", "skill", "cry", "soft", "unit",
-            "steel", "suit", "milk", "hole", "drop", "dust", "race", "dress", "cloud", "quiet",
-            "mouth", "wash", "roll", "print", "dear", "stock", "sharp", "fix", "sweet", "crowd",
-            "charge", "simple", "master", "valley", "double", "count", "length", "finger", "market", "basic",
-            "silver", "root", "event", "neck", "truck", "sail", "nor", "spread", "glad", "thick",
-            "drink", "tube", "seed", "tone", "view", "winter", "firm", "pull", "chance", "bell",
-            "win", "rush", "pour", "grew", "final", "shout", "pain", "nose", "cool", "straight",
-            "fair", "pitch", "tiny", "poem", "wish", "flow", "climb", "anger", "fear", "gift",
-            "row", "wheel", "skin", "plain", "chart", "share", "brain", "edge",
-            "computer", "program", "system", "software", "hardware", "internet", "network", "database",
-            "server", "client", "file", "code", "data", "user", "password", "email", "website",
-            "browser", "search", "click", "download", "upload", "screen", "window", "button", "menu",
-            "icon", "folder", "memory", "process", "error", "debug", "update", "install", "delete",
-            "copy", "paste", "input", "output", "device", "mobile", "phone", "tablet", "laptop",
-            "desktop", "keyboard", "mouse", "monitor", "display", "pixel", "image", "video", "audio",
-            "camera", "bluetooth", "wifi", "cable", "port", "battery", "switch", "reset", "boot",
-            "login", "logout", "profile", "account", "setting", "option", "feature", "version", "release",
-            "patch", "bug", "crash", "free", "paid", "premium", "pro", "lite", "empty", "short",
-            "narrow", "shallow", "heavy", "bright", "loud", "smooth", "rough", "clean", "dirty",
-            "wet", "dry", "fresh", "stale", "sweet", "bitter", "sour", "salty", "spicy", "strong",
-            "weak", "cheap", "expensive", "ugly", "hello", "world", "please", "thank", "thanks",
-            "sorry", "yes", "done", "okay", "sure", "maybe", "always", "often", "sometimes",
-            "today", "tomorrow", "yesterday", "evening", "afternoon", "tonight", "week",
-            "minute", "testing", "working", "loading", "saving", "running", "starting",
-            "stopping", "opening", "closing", "google", "youtube", "facebook", "twitter",
-            "windows", "linux", "android", "apple", "microsoft", "chrome", "firefox"
+            // Tech & Brands (3+ chars, unambiguous)
+            "app", "web", "api", "url", "usb", "pdf", "ram", "cpu", "gpu", "sql", "css", "xml", "git",
+            "html", "json", "http", "https", "wifi", "code", "data", "user", "file", "menu", "icon",
+            "copy", "paste", "click", "login", "logout", "email", "phone", "video", "audio", "image",
+            "pixel", "mouse", "screen", "window", "button", "folder", "memory", "system", "server",
+            "client", "device", "mobile", "tablet", "laptop", "camera", "switch", "option", "update",
+            "delete", "upload", "search", "browser", "website", "network", "program", "process",
+            "account", "profile", "setting", "feature", "version", "release", "desktop", "monitor",
+            "display", "battery", "install", "computer", "software", "hardware", "internet", "database",
+            "password", "download", "keyboard", "bluetooth", "google", "youtube", "facebook", "twitter",
+            "windows", "linux", "android", "apple", "microsoft", "chrome", "firefox", "github", "vscode",
+
+            // Common unambiguous 4+ letter English words
+            "that", "with", "have", "this", "will", "your", "from", "they", "know", "want", "been",
+            "good", "much", "some", "time", "very", "when", "come", "here", "just", "like", "long",
+            "make", "many", "more", "only", "over", "such", "take", "than", "them", "well", "were",
+            "what", "about", "after", "again", "below", "could", "every", "first", "found", "great",
+            "house", "large", "learn", "never", "other", "place", "plant", "point", "right", "small",
+            "sound", "spell", "still", "study", "their", "there", "these", "thing", "think", "three",
+            "water", "where", "which", "world", "would", "write", "years", "people", "because",
+            "before", "change", "number", "mother", "father", "family", "school", "answer", "always",
+            "hello", "please", "thanks", "welcome", "testing", "working", "loading", "running"
         };
 
         public SmartDetector(ILayoutConverter? layoutConverter = null)
@@ -84,12 +44,19 @@ namespace Munqith.Core
             _layoutConverter = layoutConverter ?? LayoutConverter.Instance;
         }
 
-        public string SmartConvert(string text, KeyboardLayout layout)
+        public string SmartConvert(string text)
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
 
+            // Determine overall conversion direction at the sentence level so standalone tokens
+            // like ',' ('و') or '[]' ('جد') always convert consistently with the sentence.
+            bool toArabic = _layoutConverter.IsEnglishText(text);
+
             var parts = Regex.Split(text, @"(\s+)");
             var result = new StringBuilder(text.Length);
+
+            int nonWhitespaceTokens = 0;
+            int preservedEnglishTokens = 0;
 
             foreach (var part in parts)
             {
@@ -99,25 +66,64 @@ namespace Munqith.Core
                     continue;
                 }
 
-                string cleaned = part.Trim(',', '.', '!', '?', ';', ':', '"', '\'', '(', ')', '[', ']', '{', '}');
+                nonWhitespaceTokens++;
 
-                if (IsLikelyEnglishWord(cleaned))
+                if (IsUrlOrEmail(part))
                 {
+                    preservedEnglishTokens++;
+                    result.Append(part);
+                    continue;
+                }
+
+                // Only strip non-Arabic-mapped outer symbols like parentheses or quotes when checking English words.
+                // NEVER strip ',', '.', ';', '\'', '[', ']', '`', '/' because those keys ARE Arabic letters (و, ز, ك, ط, ج, د, ذ, ظ)!
+                string cleaned = part.Trim('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+');
+
+                if (toArabic && IsLikelyEnglishWord(cleaned))
+                {
+                    preservedEnglishTokens++;
                     result.Append(part);
                 }
                 else
                 {
-                    result.Append(_layoutConverter.Convert(part, layout));
+                    result.Append(_layoutConverter.Convert(part, toArabic));
                 }
             }
+
+            // If EVERY token in the selection was preserved as English (e.g., user explicitly highlighted
+            // a single word like "hello" and pressed Alt+Q to convert it), perform the direct conversion.
+            if (nonWhitespaceTokens > 0 && preservedEnglishTokens == nonWhitespaceTokens)
+            {
+                return _layoutConverter.Convert(text, toArabic);
+            }
+
             return result.ToString();
         }
 
         public bool IsLikelyEnglishWord(string word)
         {
-            if (string.IsNullOrEmpty(word) || word.Length < 2) return false;
+            if (string.IsNullOrEmpty(word) || word.Length < 3) return false;
             if (!word.All(c => (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))) return false;
             return CommonEnglishWords.Contains(word);
+        }
+
+        private static bool IsUrlOrEmail(string token)
+        {
+            if (token.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                token.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                token.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Simple email check (contains @ with ASCII letters/digits around it)
+            int atIndex = token.IndexOf('@');
+            if (atIndex > 0 && atIndex < token.Length - 3 && token.IndexOf('.', atIndex) > atIndex + 1)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

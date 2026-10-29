@@ -15,6 +15,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="publish\**" />
+    <Compile Remove="publish_tiny\**" />
+    <Compile Remove="Releases\**" />
+    <Content Remove="publish\**" />
+    <Content Remove="publish_tiny\**" />
+    <Content Remove="Releases\**" />
+    <EmbeddedResource Remove="publish\**" />
+    <EmbeddedResource Remove="publish_tiny\**" />
+    <EmbeddedResource Remove="Releases\**" />
+    <None Remove="publish\**" />
+    <None Remove="publish_tiny\**" />
+    <None Remove="Releases\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Resources\app.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

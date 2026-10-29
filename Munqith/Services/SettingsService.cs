@@ -5,43 +5,57 @@ namespace Munqith.Services
 {
     public class SettingsService : ISettingsService
     {
-        private static readonly string SettingsDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Munqith");
-        private static readonly string SettingsFile = Path.Combine(SettingsDir, "settings.json");
+        private readonly string _settingsDir;
+        private readonly string _settingsFile;
+        private readonly object _fileLock = new();
         private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
         public AppSettings Settings { get; private set; } = new();
 
-        public SettingsService()
+        public SettingsService(string? customSettingsDir = null)
         {
+            _settingsDir = customSettingsDir ?? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Munqith");
+            _settingsFile = Path.Combine(_settingsDir, "settings.json");
             Load();
         }
 
         public void Load()
         {
-            try
+            lock (_fileLock)
             {
-                if (File.Exists(SettingsFile))
+                try
                 {
-                    var json = File.ReadAllText(SettingsFile);
-                    Settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+                    if (File.Exists(_settingsFile))
+                    {
+                        var json = File.ReadAllText(_settingsFile);
+                        if (!string.IsNullOrWhiteSpace(json))
+                        {
+                            Settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+                        }
+                    }
                 }
-            }
-            catch
-            {
-                Settings = new AppSettings();
+                catch
+                {
+                    Settings = new AppSettings();
+                }
             }
         }
 
         public void Save()
         {
-            try
+            lock (_fileLock)
             {
-                Directory.CreateDirectory(SettingsDir);
-                var json = JsonSerializer.Serialize(Settings, JsonOptions);
-                File.WriteAllText(SettingsFile, json);
+                try
+                {
+                    Directory.CreateDirectory(_settingsDir);
+                    string tempFile = _settingsFile + ".tmp";
+                    var json = JsonSerializer.Serialize(Settings, JsonOptions);
+                    File.WriteAllText(tempFile, json);
+                    File.Move(tempFile, _settingsFile, overwrite: true);
+                }
+                catch { }
             }
-            catch { }
         }
     }
 }

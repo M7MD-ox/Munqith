@@ -2,9 +2,12 @@
 @using Munqith.Core
 @using Munqith.Models
 @using Munqith.Services
+@implements IDisposable
 @inject ISettingsService SettingsService
 @inject IStatsService StatsService
 @inject ILayoutConverter LayoutConverter
+@inject ISmartDetector SmartDetector
+@inject IStartupService StartupService
 @inject Munqith.UI.TrayApplicationContext TrayContext
 
 <div class="munqith-container @(IsDarkMode ? "dark-theme" : "") @(IsArabic ? "rtl-mode" : "")">
@@ -187,10 +190,28 @@
                         </svg>
                         @(IsArabic ? "الكشف الذكي للكلمات (Smart Vocabulary)" : "Smart Vocabulary Detection")
                     </div>
-                    <p class="setting-desc">@(IsArabic ? "يحافظ على الكلمات الإنجليزية الصحيحة تلقائياً ويصحح فقط أخطاء الكتابة" : "Preserves real English words and only flips actual typing mistakes")</p>
+                    <p class="setting-desc">@(IsArabic ? "يحافظ على الكلمات الإنجليزية الصحيحة والروابط تلقائياً ويصحح فقط أخطاء الكتابة" : "Preserves real English words and URLs automatically while fixing typing mistakes")</p>
                 </div>
                 <label class="claude-toggle">
                     <input type="checkbox" @bind="Settings.SmartDetectionEnabled" @bind:after="OnSettingChanged" />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- Start With Windows Setting -->
+            <div class="claude-card setting-row">
+                <div class="setting-texts">
+                    <div class="setting-title">
+                        <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24">
+                            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                            <line x1="12" y1="2" x2="12" y2="12"></line>
+                        </svg>
+                        @(IsArabic ? "التشغيل التلقائي مع فتح الجهاز" : "Start Automatically with Windows")
+                    </div>
+                    <p class="setting-desc">@(IsArabic ? "تشغيل أداة مُنقِذ تلقائياً في الخلفية عند بدء تشغيل نظام ويندوز" : "Launch Munqith automatically in the system tray when Windows starts")</p>
+                </div>
+                <label class="claude-toggle">
+                    <input type="checkbox" @bind="Settings.StartWithWindows" @bind:after="OnStartupChanged" />
                     <span class="toggle-slider"></span>
                 </label>
             </div>
@@ -275,10 +296,10 @@
                 <div style="background-color: var(--bg-secondary); padding: 14px 18px; border-radius: var(--radius-md); font-size: 13.5px; line-height: 1.8; margin-bottom: 20px;">
                     <div>• <strong>@(IsArabic ? "نظام التشغيل:" : "OS:")</strong> Windows 10 / Windows 11 (64-bit)</div>
                     <div>• <strong>@(IsArabic ? "التقنية:" : "Tech Stack:")</strong> C# .NET 8.0 & Blazor Hybrid</div>
-                    <div>• <strong>@(IsArabic ? "محرك الاستجابة:" : "Latency:")</strong> Win32 Low-Level Hook + Native Clipboard (&lt;30ms)</div>
+                    <div>• <strong>@(IsArabic ? "محرك الاستجابة:" : "Engine:")</strong> Win32 Low-Level Hook + SendInput + Native Clipboard</div>
                 </div>
 
-                <a href="https://github.com" target="_blank" class="claude-btn-primary" style="text-decoration: none;">
+                <a href="https://github.com/M7MD-ox/Munqith" target="_blank" class="claude-btn-primary" style="text-decoration: none;">
                     <svg class="svg-icon" viewBox="0 0 24 24">
                         <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
                     </svg>
@@ -295,13 +316,14 @@
     private int ActiveTab = 0;
     private bool IsDarkMode;
     private bool IsArabic;
-    private string PlaygroundText = "hgpl]ggi";
+    private string PlaygroundText = "hgpl]ggi , hga;v ggi";
     private bool ShowSaveToast = false;
 
     protected override void OnInitialized()
     {
         IsDarkMode = Settings.DarkMode;
         IsArabic = Settings.Language == "ar";
+        Settings.StartWithWindows = StartupService.IsRegistered();
 
         // Ensure the 2 primary core hotkeys are always configured
         if (Settings.Hotkeys == null || Settings.Hotkeys.Count == 0)
@@ -313,6 +335,18 @@
             };
             SettingsService.Save();
         }
+
+        StatsService.StatsUpdated += OnStatsUpdated;
+    }
+
+    private void OnStatsUpdated()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        StatsService.StatsUpdated -= OnStatsUpdated;
     }
 
     private void SetTab(int tabIndex)
@@ -341,6 +375,12 @@
         SettingsService.Save();
     }
 
+    private void OnStartupChanged()
+    {
+        StartupService.SetStartup(Settings.StartWithWindows);
+        SettingsService.Save();
+    }
+
     private void OnHotkeysChanged()
     {
         SettingsService.Save();
@@ -351,21 +391,15 @@
     {
         if (!string.IsNullOrEmpty(PlaygroundText))
         {
-            string converted = LayoutConverter.Convert(PlaygroundText, KeyboardLayout.WindowsArabicPC);
-            PlaygroundText = converted;
-
-            var res = new ConversionResult
-            {
-                WasConverted = true,
-                CharacterCount = converted.Length,
-                WordCount = converted.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length
-            };
-            StatsService.RecordConversion(res);
+            PlaygroundText = Settings.SmartDetectionEnabled
+                ? SmartDetector.SmartConvert(PlaygroundText)
+                : LayoutConverter.Convert(PlaygroundText);
         }
     }
 
     private async Task SaveAndApply()
     {
+        StartupService.SetStartup(Settings.StartWithWindows);
         SettingsService.Save();
         TrayContext.RegisterConfiguredHotkeys();
         TrayContext.CreateContextMenu();
