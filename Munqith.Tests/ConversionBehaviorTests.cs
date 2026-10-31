@@ -53,6 +53,20 @@ namespace Munqith.Tests
         }
 
         [Theory]
+        [InlineData("HGFVKHL[ LFRHA AYHG ;,DS , HKH LA UHVT HJUHLG UGDI", "البرنامج مبقاش شغال كويس و انا مش عارف اتعامل عليه")]
+        [InlineData("HGFVKHL[", "البرنامج")]
+        [InlineData("LFRHA", "مبقاش")]
+        [InlineData("AYHG", "شغال")]
+        [InlineData("Lfrha ayhg", "مبقاش شغال")]
+        [InlineData("Hpl]", "أحمد")]
+        [InlineData("G[g", "لأجل")]
+        public void test_caps_lock_and_sentence_case_convert_to_natural_arabic(string input, string expected)
+        {
+            Assert.Equal(expected, _smartDetector.SmartConvert(input));
+            Assert.Equal(expected, _converter.Convert(input));
+        }
+
+        [Theory]
         [InlineData("hkh fajyg ugn windows , github ;g d,l", "انا بشتغل على windows و github كل يوم")]
         [InlineData("hgsghl ugd;l hello", "السلام عليكم hello")]
         [InlineData("hgsghl https://github.com/M7MD-ox/Munqith ugd;l", "السلام https://github.com/M7MD-ox/Munqith عليكم")]

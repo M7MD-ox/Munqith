@@ -52,6 +52,11 @@ namespace Munqith.Core
             // like ',' ('و') or '[]' ('جد') always convert consistently with the sentence.
             bool toArabic = _layoutConverter.IsEnglishText(text);
 
+            if (toArabic)
+            {
+                text = LayoutConverter.NormalizeCapsLockText(text);
+            }
+
             var parts = Regex.Split(text, @"(\s+)");
             var result = new StringBuilder(text.Length);
 
@@ -75,9 +80,24 @@ namespace Munqith.Core
                     continue;
                 }
 
+                string token = part;
+                if (toArabic)
+                {
+                    int tokUpper = 0, tokLower = 0;
+                    foreach (char c in token)
+                    {
+                        if (c >= 'A' && c <= 'Z') tokUpper++;
+                        else if (c >= 'a' && c <= 'z') tokLower++;
+                    }
+                    if (tokUpper > 1 && tokLower == 0)
+                    {
+                        token = token.ToLowerInvariant();
+                    }
+                }
+
                 // Only strip non-Arabic-mapped outer symbols like parentheses or quotes when checking English words.
                 // NEVER strip ',', '.', ';', '\'', '[', ']', '`', '/' because those keys ARE Arabic letters (و, ز, ك, ط, ج, د, ذ, ظ)!
-                string cleaned = part.Trim('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+');
+                string cleaned = token.Trim('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+');
 
                 if (toArabic && IsLikelyEnglishWord(cleaned))
                 {
@@ -86,7 +106,7 @@ namespace Munqith.Core
                 }
                 else
                 {
-                    result.Append(_layoutConverter.Convert(part, toArabic));
+                    result.Append(_layoutConverter.Convert(token, toArabic));
                 }
             }
 

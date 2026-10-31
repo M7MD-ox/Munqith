@@ -66,7 +66,45 @@ namespace Munqith.Core
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
 
-            return toArabic ? ConvertToArabic(text) : ConvertToEnglish(text);
+            if (toArabic)
+            {
+                text = NormalizeCapsLockText(text);
+                return ConvertToArabic(text);
+            }
+
+            return ConvertToEnglish(text);
+        }
+
+        /// <summary>
+        /// Normalizes text typed while Caps Lock was active.
+        /// When typing in English with Caps Lock ON, letters become uppercase A-Z.
+        /// On an Arabic Windows keyboard, Caps Lock does not produce shifted keys, ligatures, or diacritics.
+        /// </summary>
+        public static string NormalizeCapsLockText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+
+            int upper = 0;
+            int lower = 0;
+            foreach (char c in text)
+            {
+                if (c >= 'A' && c <= 'Z') upper++;
+                else if (c >= 'a' && c <= 'z') lower++;
+            }
+
+            // If text has uppercase English letters and is predominantly (>= 60%) or 100% uppercase,
+            // Caps Lock was ON during typing. Normalize letters to lowercase so standard Arabic letters are produced.
+            if (upper > 0 && (lower == 0 || (double)upper / (upper + lower) >= 0.6))
+            {
+                var sb = new StringBuilder(text.Length);
+                foreach (char c in text)
+                {
+                    sb.Append((c >= 'A' && c <= 'Z') ? char.ToLowerInvariant(c) : c);
+                }
+                return sb.ToString();
+            }
+
+            return text;
         }
 
         private static string ConvertToArabic(string text)

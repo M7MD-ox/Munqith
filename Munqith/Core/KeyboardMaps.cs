@@ -73,31 +73,33 @@ namespace Munqith.Core
                 { ']', '\u062F' }, // د
 
                 // Uppercase (Shift) letters (QWERTY row)
-                { 'Q', '\u064E' }, // َ fatha
-                { 'W', '\u064B' }, // ً tanween fatha
-                { 'E', '\u064F' }, // ُ damma
-                { 'R', '\u064C' }, // ٌ tanween damma
+                // In English-to-Arabic layout conversion, map letter keys to primary Arabic letters
+                // to prevent auto-capitalization in Word/browsers from generating bogus symbols or diacritics.
+                { 'Q', '\u0636' }, // ض
+                { 'W', '\u0635' }, // ص
+                { 'E', '\u062B' }, // ث
+                { 'R', '\u0642' }, // ق
                 { 'Y', '\u0625' }, // إ
-                { 'U', '\u2018' }, // ‘
-                { 'I', '\u00F7' }, // ÷
-                { 'O', '\u00D7' }, // ×
-                { 'P', '\u061B' }, // ؛ Arabic semicolon
+                { 'U', '\u0639' }, // ع
+                { 'I', '\u0647' }, // ه
+                { 'O', '\u062E' }, // خ
+                { 'P', '\u062D' }, // ح
                 // Uppercase (Shift) letters (ASDF row)
-                { 'A', '\u0650' }, // ِ kasra
-                { 'S', '\u064D' }, // ٍ tanween kasra
-                { 'D', ']' },
-                { 'F', '[' },
+                { 'A', '\u0634' }, // ش
+                { 'S', '\u0633' }, // س
+                { 'D', '\u064A' }, // ي
+                { 'F', '\u0628' }, // ب
                 { 'H', '\u0623' }, // أ
-                { 'J', '\u0640' }, // ـ tatweel
-                { 'K', '\u060C' }, // ، Arabic comma
-                { 'L', '/' },
+                { 'J', '\u062A' }, // ت
+                { 'K', '\u0646' }, // ن
+                { 'L', '\u0645' }, // م
                 // Uppercase (Shift) letters (ZXCV row)
-                { 'Z', '~' },
-                { 'X', '\u0652' }, // ْ sukun
-                { 'C', '}' },
-                { 'V', '{' },
+                { 'Z', '\u0626' }, // ئ
+                { 'X', '\u0621' }, // ء
+                { 'C', '\u0624' }, // ؤ
+                { 'V', '\u0631' }, // ر
                 { 'N', '\u0622' }, // آ
-                { 'M', '\u2019' }, // ’
+                { 'M', '\u0629' }, // ة
 
                 // Special characters (shifted)
                 { '~', '\u0651' }, // ّ shadda
