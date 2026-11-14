@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Drawing.Drawing2D;
+using System.Security.Principal;
 using Munqith.Hooks;
 using Munqith.Models;
 using Munqith.Services;
@@ -40,6 +42,7 @@ namespace Munqith.UI
 
             _statsService.StatsUpdated += OnStatsUpdated;
             _conversionService.ConversionCompleted += OnConversionCompleted;
+            _conversionService.ElevationBlocked += OnElevationBlocked;
             _keyboardHook.HotkeyTriggered += OnHotkeyTriggered;
             _keyboardHook.Start();
         }
@@ -106,6 +109,15 @@ namespace Munqith.UI
             };
             menu.Items.Add(settingsItem);
 
+            if (!IsRunningAsAdministrator)
+            {
+                var adminItem = new ToolStripMenuItem(isAr ? "🛡️  تشغيل كمسؤول (Admin)" : "🛡️  Run as Administrator", null, (s, e) => RestartAsAdministrator())
+                {
+                    Padding = new Padding(8, 6, 8, 6)
+                };
+                menu.Items.Add(adminItem);
+            }
+
             menu.Items.Add(new CustomMenuSeparator(isDark));
 
             // 3. Exit
@@ -161,9 +173,61 @@ namespace Munqith.UI
             _keyboardHook.UpdateBindings(_settingsService.Settings.Hotkeys);
         }
 
+        public bool IsRunningAsAdministrator
+        {
+            get
+            {
+                try
+                {
+                    using var identity = WindowsIdentity.GetCurrent();
+                    return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
+        public void RestartAsAdministrator()
+        {
+            try
+            {
+                string? exePath = Environment.ProcessPath;
+                if (string.IsNullOrEmpty(exePath)) return;
+
+                var startInfo = new ProcessStartInfo(exePath)
+                {
+                    Verb = "runas",
+                    UseShellExecute = true,
+                    Arguments = "--restart"
+                };
+
+                Process.Start(startInfo);
+                ExitApplication();
+            }
+            catch { }
+        }
+
         public void SetHotkeyCapturePaused(bool paused)
         {
             _keyboardHook.IsPaused = paused;
+        }
+
+        private void OnElevationBlocked()
+        {
+            bool isAr = _settingsService.Settings.Language == "ar";
+            string title = isAr ? "⚠️ نافذة تعمل بصلاحيات المدير" : "⚠️ Elevated App Detected";
+            string message = isAr ? "شغّل مُنقِذ كمسؤول من الإعدادات أو شريط المهام" : "Run Munqith as Admin from Settings or Tray";
+
+            if (_uiSyncContext != null)
+            {
+                _uiSyncContext.Post(_ => ShowConversionToast(message, title), null);
+            }
+            else
+            {
+                ShowConversionToast(message, title);
+            }
         }
 
         private void OnConversionCompleted(ConversionResult result)
@@ -183,7 +247,7 @@ namespace Munqith.UI
             }
         }
 
-        private void ShowConversionToast(string convertedText)
+        private void ShowConversionToast(string convertedText, string? customTitle = null)
         {
             try
             {
@@ -195,7 +259,7 @@ namespace Munqith.UI
 
                 bool isDark = _settingsService.Settings.DarkMode;
                 bool isAr = _settingsService.Settings.Language == "ar";
-                _activeToast = new ConversionToastForm(convertedText, isDark, isAr);
+                _activeToast = new ConversionToastForm(convertedText, isDark, isAr, customTitle);
                 _activeToast.Show();
             }
             catch { }
@@ -228,6 +292,7 @@ namespace Munqith.UI
         {
             _statsService.StatsUpdated -= OnStatsUpdated;
             _conversionService.ConversionCompleted -= OnConversionCompleted;
+            _conversionService.ElevationBlocked -= OnElevationBlocked;
             if (_activeToast != null && !_activeToast.IsDisposed)
             {
                 _activeToast.Close();

@@ -31,10 +31,10 @@ namespace Munqith.UI
             }
         }
 
-        public ConversionToastForm(string convertedText, bool isDark, bool isArabic)
+        public ConversionToastForm(string convertedText, bool isDark, bool isArabic, string? customTitle = null)
         {
             _isRtl = isArabic;
-            _title = isArabic ? "✓ تم الإنقاذ" : "✓ Rescued";
+            _title = customTitle ?? (isArabic ? "✓ تم الإنقاذ" : "✓ Rescued");
 
             string singleLine = convertedText.Replace("\r", " ").Replace("\n", " ").Trim();
             _preview = singleLine.Length > 44 ? singleLine[..44] + "..." : singleLine;

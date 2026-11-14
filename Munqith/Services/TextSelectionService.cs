@@ -50,8 +50,8 @@ namespace Munqith.Services
 
         public async Task<string?> TryCopyCurrentSelection()
         {
-            // Wait briefly if the user is still physically holding the Alt key so it doesn't collide with Ctrl+C
-            await WaitForPhysicalAltReleaseAsync(maxWaitMs: 120);
+            // Wait until physical Alt/Shift/Ctrl keys are released so Ctrl+C isn't misinterpreted as Ctrl+Alt+C or Ctrl+Shift+C.
+            await WaitForPhysicalModifiersReleaseAsync(maxWaitMs: 220);
 
             _clipboard.Clear();
             ReleaseModifiers();
@@ -60,12 +60,22 @@ namespace Munqith.Services
             // Send Ctrl + C atomically via SendInput
             SendKeyChord(NativeMethods.VK_CONTROL, NativeMethods.VK_C);
 
-            await Task.Delay(KeyPressDelayMs);
-            return _clipboard.GetText(maxRetries: 8, delayMs: 10);
+            await Task.Delay(25);
+            string? copied = _clipboard.GetText(maxRetries: 15, delayMs: 12);
+            if (!string.IsNullOrEmpty(copied))
+            {
+                return copied;
+            }
+
+            // Fallback: try Ctrl + Insert for editors/terminals that prefer Insert shortcuts.
+            SendKeyChord(NativeMethods.VK_CONTROL, NativeMethods.VK_INSERT, extendedKey: true);
+            await Task.Delay(20);
+            return _clipboard.GetText(maxRetries: 8, delayMs: 12);
         }
 
         public async Task SimulatePaste()
         {
+            await WaitForPhysicalModifiersReleaseAsync(maxWaitMs: 150);
             ReleaseModifiers();
             await Task.Delay(KeyPressDelayMs);
 
@@ -119,31 +129,38 @@ namespace Munqith.Services
             }
         }
 
-        private static async Task WaitForPhysicalAltReleaseAsync(int maxWaitMs)
+        private static async Task WaitForPhysicalModifiersReleaseAsync(int maxWaitMs)
         {
             int elapsed = 0;
             const int stepMs = 10;
 
             while (elapsed < maxWaitMs)
             {
-                bool altDown = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU) & 0x8000) != 0 ||
-                               (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LMENU) & 0x8000) != 0 ||
-                               (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RMENU) & 0x8000) != 0;
+                bool modifierDown =
+                    (NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU) & 0x8000) != 0 ||
+                    (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LMENU) & 0x8000) != 0 ||
+                    (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RMENU) & 0x8000) != 0 ||
+                    (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0 ||
+                    (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LSHIFT) & 0x8000) != 0 ||
+                    (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RSHIFT) & 0x8000) != 0 ||
+                    (NativeMethods.GetAsyncKeyState(NativeMethods.VK_CONTROL) & 0x8000) != 0 ||
+                    (NativeMethods.GetAsyncKeyState(NativeMethods.VK_LCONTROL) & 0x8000) != 0 ||
+                    (NativeMethods.GetAsyncKeyState(NativeMethods.VK_RCONTROL) & 0x8000) != 0;
 
-                if (!altDown) break;
+                if (!modifierDown) break;
 
                 await Task.Delay(stepMs);
                 elapsed += stepMs;
             }
         }
 
-        private static void SendKeyChord(ushort modifierVk, ushort keyVk)
+        private static void SendKeyChord(ushort modifierVk, ushort keyVk, bool extendedKey = false)
         {
             var inputs = new NativeMethods.INPUT[]
             {
                 CreateKeyInput(modifierVk, keyUp: false),
-                CreateKeyInput(keyVk, keyUp: false),
-                CreateKeyInput(keyVk, keyUp: true),
+                CreateKeyInput(keyVk, keyUp: false, isExtended: extendedKey),
+                CreateKeyInput(keyVk, keyUp: true, isExtended: extendedKey),
                 CreateKeyInput(modifierVk, keyUp: true)
             };
 
@@ -151,9 +168,10 @@ namespace Munqith.Services
             if (sent == 0)
             {
                 // Fallback if SendInput is blocked by UIPI
+                uint ext = extendedKey ? NativeMethods.KEYEVENTF_EXTENDEDKEY : 0;
                 NativeMethods.keybd_event((byte)modifierVk, 0, 0, UIntPtr.Zero);
-                NativeMethods.keybd_event((byte)keyVk, 0, 0, UIntPtr.Zero);
-                NativeMethods.keybd_event((byte)keyVk, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+                NativeMethods.keybd_event((byte)keyVk, 0, ext, UIntPtr.Zero);
+                NativeMethods.keybd_event((byte)keyVk, 0, ext | NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
                 NativeMethods.keybd_event((byte)modifierVk, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
             }
         }

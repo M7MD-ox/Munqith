@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Principal;
 using Munqith.Core;
 using Munqith.Interop;
 using Munqith.Models;
@@ -15,6 +16,7 @@ namespace Munqith.Services
         private readonly INativeClipboard _clipboard;
 
         public event Action<ConversionResult>? ConversionCompleted;
+        public event Action? ElevationBlocked;
 
         // Anti-reentrancy debounce lock
         private static bool _isConverting = false;
@@ -53,6 +55,12 @@ namespace Munqith.Services
 
                 if (IsForegroundAppExcluded(settings.ExcludedApps))
                 {
+                    return;
+                }
+
+                if (IsBlockedByUiPrivilegeIsolation())
+                {
+                    ElevationBlocked?.Invoke();
                     return;
                 }
 
@@ -149,6 +157,63 @@ namespace Munqith.Services
             catch { }
 
             return false;
+        }
+
+        private static bool IsBlockedByUiPrivilegeIsolation()
+        {
+            if (IsCurrentProcessElevated()) return false;
+
+            IntPtr hwnd = NativeMethods.GetForegroundWindow();
+            if (hwnd == IntPtr.Zero) return false;
+
+            NativeMethods.GetWindowThreadProcessId(hwnd, out uint pid);
+            if (pid == 0 || pid == (uint)Environment.ProcessId) return false;
+
+            IntPtr hProc = NativeMethods.OpenProcess(NativeMethods.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if (hProc == IntPtr.Zero)
+            {
+                // ERROR_ACCESS_DENIED (5) indicates a protected / elevated process above our privilege level.
+                return System.Runtime.InteropServices.Marshal.GetLastWin32Error() == 5;
+            }
+
+            try
+            {
+                if (!NativeMethods.OpenProcessToken(hProc, NativeMethods.TOKEN_QUERY, out IntPtr hToken))
+                {
+                    return System.Runtime.InteropServices.Marshal.GetLastWin32Error() == 5;
+                }
+
+                try
+                {
+                    return NativeMethods.GetTokenInformation(
+                               hToken,
+                               NativeMethods.TokenElevationClass,
+                               out int isElevated,
+                               sizeof(int),
+                               out _) && isElevated != 0;
+                }
+                finally
+                {
+                    NativeMethods.CloseHandle(hToken);
+                }
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(hProc);
+            }
+        }
+
+        private static bool IsCurrentProcessElevated()
+        {
+            try
+            {
+                using var identity = WindowsIdentity.GetCurrent();
+                return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

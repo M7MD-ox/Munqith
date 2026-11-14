@@ -13,28 +13,43 @@ namespace Munqith
         private const string SingleInstanceMutexName = "MunqithSingleInstance";
 
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
-            // Ensure only one instance runs
-            using var mutex = new Mutex(true, SingleInstanceMutexName, out bool isNewInstance);
-            if (!isNewInstance)
+            bool isRestart = args.Any(a => string.Equals(a, "--restart", StringComparison.OrdinalIgnoreCase));
+
+            // Ensure only one instance runs (wait briefly if restarting as Administrator)
+            Mutex? mutex = null;
+            bool isNewInstance = false;
+            int attempts = isRestart ? 25 : 1;
+            for (int i = 0; i < attempts; i++)
             {
-                MessageBox.Show(
-                    "مُنقِذ Munqith is already running in the system tray!",
-                    "Munqith",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-                return;
+                mutex?.Dispose();
+                mutex = new Mutex(true, SingleInstanceMutexName, out isNewInstance);
+                if (isNewInstance) break;
+                Thread.Sleep(100);
             }
 
-            ApplicationConfiguration.Initialize();
+            using (mutex)
+            {
+                if (!isNewInstance)
+                {
+                    MessageBox.Show(
+                        "مُنقِذ Munqith is already running in the system tray!",
+                        "Munqith",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
 
-            var services = new ServiceCollection();
-            ConfigureServices(services);
+                ApplicationConfiguration.Initialize();
 
-            var serviceProvider = services.BuildServiceProvider();
+                var services = new ServiceCollection();
+                ConfigureServices(services);
 
-            Application.Run(serviceProvider.GetRequiredService<TrayApplicationContext>());
+                var serviceProvider = services.BuildServiceProvider();
+
+                Application.Run(serviceProvider.GetRequiredService<TrayApplicationContext>());
+            }
         }
 
         private static void ConfigureServices(IServiceCollection services)

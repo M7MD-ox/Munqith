@@ -303,6 +303,33 @@
                 </label>
             </div>
 
+            <!-- Administrator Elevation Card -->
+            <div class="claude-card setting-row">
+                <div class="setting-texts">
+                    <div class="setting-title">
+                        <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        @(IsArabic ? "صلاحيات التشغيل (برامج المدير / Admin)" : "Elevated Permissions (Admin Apps)")
+                    </div>
+                    <p class="setting-desc">
+                        @(TrayContext.IsRunningAsAdministrator
+                            ? (IsArabic ? "الأداة تعمل حالياً بصلاحيات المدير وتدعم جميع البرامج بما فيها نوافذ Admin." : "Running as Administrator — works inside elevated apps as well.")
+                            : (IsArabic ? "لو توقفت الأداة داخل برنامج يعمل كمسؤول (مثل Terminal Admin)، أعد تشغيلها كمسؤول." : "If an elevated app blocks conversion, restart Munqith as Administrator."))
+                    </p>
+                </div>
+                @if (TrayContext.IsRunningAsAdministrator)
+                {
+                    <span class="hotkey-status-pill is-active">@(IsArabic ? "مسؤول (Admin)" : "Admin Active")</span>
+                }
+                else
+                {
+                    <button type="button" class="claude-btn-secondary" @onclick="RestartAsAdmin">
+                        @(IsArabic ? "تشغيل كمسؤول" : "Run as Admin")
+                    </button>
+                }
+            </div>
+
             <!-- Instant Save Card -->
             <div class="claude-card setting-row" style="background-color: var(--bg-secondary);">
                 <div>
@@ -544,6 +571,11 @@
     {
         StartupService.SetStartup(Settings.StartWithWindows);
         SettingsService.Save();
+    }
+
+    private void RestartAsAdmin()
+    {
+        TrayContext.RestartAsAdministrator();
     }
 
     private void OnHotkeysChanged()
