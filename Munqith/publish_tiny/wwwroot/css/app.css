@@ -398,8 +398,9 @@ body {
 .claude-toggle {
     position: relative;
     display: inline-block;
-    width: 48px;
-    height: 26px;
+    flex-shrink: 0;
+    width: 52px;
+    height: 28px;
     cursor: pointer;
 }
 
@@ -412,32 +413,43 @@ body {
 .toggle-slider {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-color: var(--border-subtle);
+    background-color: var(--bg-secondary);
     border-radius: var(--radius-pill);
-    transition: var(--transition);
-    border: 1px solid var(--border-hover);
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1.5px solid var(--border-hover);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.claude-toggle:hover .toggle-slider {
+    border-color: var(--terracotta);
+}
+
+.claude-toggle input:focus-visible + .toggle-slider {
+    box-shadow: 0 0 0 3px var(--terracotta-light);
 }
 
 .toggle-slider:before {
     position: absolute;
     content: "";
-    height: 18px;
-    width: 18px;
+    height: 20px;
+    width: 20px;
     left: 3px;
-    bottom: 3px;
+    top: 50%;
+    transform: translateY(-50%);
     background-color: #FFFFFF;
     border-radius: 50%;
-    transition: var(--transition);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .claude-toggle input:checked + .toggle-slider {
-    background-color: var(--terracotta);
+    background: linear-gradient(135deg, var(--terracotta), #C86444);
     border-color: var(--terracotta);
+    box-shadow: 0 2px 8px rgba(217, 119, 87, 0.28);
 }
 
 .claude-toggle input:checked + .toggle-slider:before {
-    transform: translateX(22px);
+    transform: translate(23px, -50%);
 }
 
 /* Hotkey Item */
@@ -445,13 +457,49 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border-subtle);
+    gap: 16px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.hotkey-item:hover {
+    border-color: var(--border-hover);
 }
 
 .hotkey-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.hotkey-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.hotkey-status-pill {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-subtle);
+    transition: all 0.2s ease;
+}
+
+.hotkey-status-pill.is-active {
+    background-color: var(--terracotta-light);
+    color: var(--terracotta-active);
+    border-color: var(--terracotta-border);
+}
+
+.hotkey-status-pill.is-inactive {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-hover);
 }
 
 .hotkey-badge {
@@ -523,6 +571,11 @@ body {
     text-align: right;
 }
 
+.rtl-mode .toggle-slider:before {
+    left: auto;
+    right: 3px;
+}
+
 .rtl-mode .claude-toggle input:checked + .toggle-slider:before {
-    transform: translateX(-22px);
+    transform: translate(-23px, -50%);
 }

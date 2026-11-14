@@ -262,10 +262,15 @@
                             </span>
                         </div>
                         
-                        <label class="claude-toggle">
-                            <input type="checkbox" @bind="hk.IsEnabled" @bind:after="OnHotkeysChanged" />
-                            <span class="toggle-slider"></span>
-                        </label>
+                        <div class="hotkey-controls">
+                            <span class="hotkey-status-pill @(hk.IsEnabled ? "is-active" : "is-inactive")">
+                                @(hk.IsEnabled ? (IsArabic ? "مُفعّل" : "Active") : (IsArabic ? "معطّل" : "Disabled"))
+                            </span>
+                            <label class="claude-toggle" title="@(hk.IsEnabled ? (IsArabic ? "تعطيل الاختصار" : "Disable hotkey") : (IsArabic ? "تفعيل الاختصار" : "Enable hotkey"))">
+                                <input type="checkbox" @bind="hk.IsEnabled" @bind:after="OnHotkeysChanged" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
                 }
             </div>
@@ -277,13 +282,13 @@
                     <svg class="svg-icon" style="width: 24px; height: 24px;" viewBox="0 0 24 24">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     </svg>
-                    @(IsArabic ? "مُنقِذ — Munqith v1.0.0" : "Munqith v1.0.0")
+                    @(IsArabic ? "مُنقِذ — Munqith v1.0.2" : "Munqith v1.0.2")
                 </h3>
                 
                 <p style="font-size: 14.5px; line-height: 1.7; margin: 0 0 14px 0;">
                     @(IsArabic
-                        ? "أداة ويندوز ذكية وفائقة السرعة تعمل في الخلفية لتصحيح لغة الكتابة تلقائياً في كافة البرامج والمتصفحات بضغطة اختصار واحدة، دون الحاجة لإعادة كتابة النص من جديد."
-                        : "Fast, lightweight Windows utility running in the background to instantly auto-correct mistyped keyboard layouts across all Windows apps and browsers with a single hotkey.")
+                        ? "أداة ويندوز ذكية وفائقة السرعة تعمل في الخلفية لتصحيح لغة الكتابة ثنائياً (عربي ↔ إنجليزي) تلقائياً في كافة البرامج والمتصفحات بضغطة اختصار واحدة، مع الحفاظ على الكلمات الإنجليزية والروابط ومحتوى الحافظة."
+                        : "Fast, lightweight Windows utility running in the background to instantly auto-correct mistyped keyboard layouts bidirectionally (AR ↔ EN) across all Windows apps and browsers while preserving real English words, URLs, and your clipboard.")
                 </p>
 
                 <!-- Dedicated Free for Allah notice -->
@@ -293,18 +298,30 @@
                         : "✨ This application is completely free and open-source for the sake of Allah. We only ask for your sincere prayers.")
                 </div>
 
-                <div style="background-color: var(--bg-secondary); padding: 14px 18px; border-radius: var(--radius-md); font-size: 13.5px; line-height: 1.8; margin-bottom: 20px;">
+                <div style="background-color: var(--bg-secondary); padding: 14px 18px; border-radius: var(--radius-md); font-size: 13.5px; line-height: 1.85; margin-bottom: 20px;">
                     <div>• <strong>@(IsArabic ? "نظام التشغيل:" : "OS:")</strong> Windows 10 / Windows 11 (64-bit)</div>
-                    <div>• <strong>@(IsArabic ? "التقنية:" : "Tech Stack:")</strong> C# .NET 8.0 & Blazor Hybrid</div>
-                    <div>• <strong>@(IsArabic ? "محرك الاستجابة:" : "Engine:")</strong> Win32 Low-Level Hook + SendInput + Native Clipboard</div>
+                    <div>• <strong>@(IsArabic ? "التقنية:" : "Tech Stack:")</strong> C# .NET 8.0 LTS &amp; Blazor Hybrid</div>
+                    <div>• <strong>@(IsArabic ? "خريطة الكيبورد:" : "Layout Engine:")</strong> @(IsArabic ? "تخطيط Windows Arabic 101 الكامل (Shift+Letter، التشكيل، الهمزات، وفك غموض حرف لا)" : "Full Windows Arabic 101 (Shift+Letter, diacritics, Hamza forms & Lam-Alef disambiguation)")</div>
+                    <div>• <strong>@(IsArabic ? "محرك الاستجابة:" : "Input Engine:")</strong> @(IsArabic ? "Win32 Low-Level Hook (تجاهل الأحداث المحقونة) + SendInput + استعادة الحافظة التلقائية" : "Win32 Low-Level Hook (LLKHF_INJECTED safe) + SendInput + Auto Clipboard Restore")</div>
+                    <div>• <strong>@(IsArabic ? "إحصائيات شريط المهام:" : "Tray Tracking:")</strong> @(IsArabic ? "حساب لحظي لعدد مرات الإنقاذ والوقت الفعلي الموفَّر في الخلفية" : "Live rescue counter & real time-saved tracking directly in the System Tray")</div>
                 </div>
 
-                <button type="button" class="claude-btn-primary" @onclick="OpenGitHubRepo">
-                    <svg class="svg-icon" viewBox="0 0 24 24">
-                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                    </svg>
-                    GitHub Repository
-                </button>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" class="claude-btn-primary" @onclick="OpenGitHubRepo">
+                        <svg class="svg-icon" viewBox="0 0 24 24">
+                            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                        </svg>
+                        GitHub Repository
+                    </button>
+                    <button type="button" class="claude-btn-secondary" @onclick="OpenGitHubReleases">
+                        <svg class="svg-icon" viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        @(IsArabic ? "صفحة الإصدارات والتحديثات" : "Releases & Updates")
+                    </button>
+                </div>
             </div>
         }
     </main>
@@ -337,6 +354,7 @@
         }
 
         StatsService.StatsUpdated += OnStatsUpdated;
+        TrayContext.DashboardActivated += OnDashboardActivated;
     }
 
     private void OnStatsUpdated()
@@ -344,9 +362,20 @@
         _ = InvokeAsync(StateHasChanged);
     }
 
+    private void OnDashboardActivated()
+    {
+        _ = InvokeAsync(() =>
+        {
+            IsDarkMode = Settings.DarkMode;
+            IsArabic = Settings.Language == "ar";
+            StateHasChanged();
+        });
+    }
+
     public void Dispose()
     {
         StatsService.StatsUpdated -= OnStatsUpdated;
+        TrayContext.DashboardActivated -= OnDashboardActivated;
     }
 
     private void SetTab(int tabIndex)
@@ -412,11 +441,15 @@
         StateHasChanged();
     }
 
-    private void OpenGitHubRepo()
+    private void OpenGitHubRepo() => OpenExternalUrl("https://github.com/M7MD-ox/Munqith");
+
+    private void OpenGitHubReleases() => OpenExternalUrl("https://github.com/M7MD-ox/Munqith/releases/latest");
+
+    private static void OpenExternalUrl(string url)
     {
         try
         {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://github.com/M7MD-ox/Munqith")
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
             {
                 UseShellExecute = true
             });

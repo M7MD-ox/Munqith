@@ -40,7 +40,8 @@ namespace Munqith.Services
         }
 
         /// <summary>
-        /// Record a conversion. Estimates ~3.3 chars/sec average typing speed.
+        /// Record a conversion. Estimates ~1.5s overhead (noticing mistake, deleting, switching layout)
+        /// plus retyping time at ~3.3 chars/sec average typing speed.
         /// </summary>
         public void RecordConversion(ConversionResult result)
         {
@@ -51,7 +52,7 @@ namespace Munqith.Services
                 _settingsService.Settings.TotalConversions++;
                 _settingsService.Settings.TotalCharactersConverted += result.CharacterCount;
                 _settingsService.Settings.TotalWordsConverted += result.WordCount;
-                double timeSaved = result.CharacterCount / 3.3;
+                double timeSaved = 1.5 + (result.CharacterCount / 3.3);
                 _settingsService.Settings.TotalTimeSavedSeconds += timeSaved;
                 _settingsService.Save();
             }

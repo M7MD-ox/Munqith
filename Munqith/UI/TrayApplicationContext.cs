@@ -13,7 +13,11 @@ namespace Munqith.UI
         private readonly IConversionService _conversionService;
         private readonly IKeyboardHook _keyboardHook;
         private readonly IServiceProvider _serviceProvider;
+        private readonly SynchronizationContext? _uiSyncContext;
         private SettingsForm? _settingsForm;
+        private ToolStripMenuItem? _statsMenuItem;
+
+        public event Action? DashboardActivated;
 
         public TrayApplicationContext(
             ISettingsService settingsService,
@@ -27,11 +31,13 @@ namespace Munqith.UI
             _conversionService = conversionService;
             _keyboardHook = keyboardHook;
             _serviceProvider = serviceProvider;
+            _uiSyncContext = SynchronizationContext.Current;
 
             _trayIcon = new NotifyIcon();
             InitializeTrayIcon();
             RegisterConfiguredHotkeys();
 
+            _statsService.StatsUpdated += OnStatsUpdated;
             _keyboardHook.HotkeyTriggered += OnHotkeyTriggered;
             _keyboardHook.Start();
         }
@@ -59,6 +65,7 @@ namespace Munqith.UI
             _trayIcon.Visible = true;
 
             CreateContextMenu();
+            UpdateTrayStatsDisplay();
 
             _trayIcon.DoubleClick += (s, e) => ShowSettings();
         }
@@ -79,7 +86,17 @@ namespace Munqith.UI
 
             menu.Renderer = new ClaudeTrayMenuRenderer(isDark);
 
-            // 1. Settings Header / Dashboard
+            // 1. Live Stats Summary (click opens Dashboard)
+            _statsMenuItem = new ToolStripMenuItem(FormatTrayStatsMenuText(isAr), null, (s, e) => ShowSettings())
+            {
+                Font = new Font("Segoe UI", 9f, FontStyle.Regular),
+                Padding = new Padding(8, 5, 8, 5)
+            };
+            menu.Items.Add(_statsMenuItem);
+
+            menu.Items.Add(new CustomMenuSeparator(isDark));
+
+            // 2. Settings Header / Dashboard
             var settingsItem = new ToolStripMenuItem(isAr ? "⚙️  لوحة التحكم والإعدادات" : "⚙️  Dashboard & Settings", null, (s, e) => ShowSettings())
             {
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
@@ -89,7 +106,7 @@ namespace Munqith.UI
 
             menu.Items.Add(new CustomMenuSeparator(isDark));
 
-            // 2. Exit
+            // 3. Exit
             var exitItem = new ToolStripMenuItem(isAr ? "❌  إغلاق البرنامج" : "❌  Exit Munqith", null, (s, e) => ExitApplication())
             {
                 Padding = new Padding(8, 6, 8, 6)
@@ -97,6 +114,44 @@ namespace Munqith.UI
             menu.Items.Add(exitItem);
 
             _trayIcon.ContextMenuStrip = menu;
+            UpdateTrayStatsDisplay();
+        }
+
+        private string FormatTrayStatsMenuText(bool isAr)
+        {
+            string saved = isAr ? _statsService.GetTimeSavedDisplayArabic() : _statsService.GetTimeSavedDisplay();
+            return isAr
+                ? $"⚡ الإنقاذات: {_statsService.TotalConversions:N0}  •  ⏱️ {saved}"
+                : $"⚡ Rescues: {_statsService.TotalConversions:N0}  •  ⏱️ {saved}";
+        }
+
+        private void UpdateTrayStatsDisplay()
+        {
+            bool isAr = _settingsService.Settings.Language == "ar";
+            string saved = isAr ? _statsService.GetTimeSavedDisplayArabic() : _statsService.GetTimeSavedDisplay();
+            string tooltip = isAr
+                ? $"مُنقِذ • {_statsService.TotalConversions:N0} إنقاذ | {saved}"
+                : $"Munqith • {_statsService.TotalConversions:N0} rescues | {saved}";
+
+            // NotifyIcon.Text has a 63-character limit in WinForms.
+            _trayIcon.Text = tooltip.Length > 63 ? tooltip[..63] : tooltip;
+
+            if (_statsMenuItem != null)
+            {
+                _statsMenuItem.Text = FormatTrayStatsMenuText(isAr);
+            }
+        }
+
+        private void OnStatsUpdated()
+        {
+            if (_uiSyncContext != null)
+            {
+                _uiSyncContext.Post(_ => UpdateTrayStatsDisplay(), null);
+            }
+            else
+            {
+                UpdateTrayStatsDisplay();
+            }
         }
 
         public void RegisterConfiguredHotkeys()
@@ -124,10 +179,12 @@ namespace Munqith.UI
             _settingsForm.WindowState = FormWindowState.Normal;
             _settingsForm.BringToFront();
             _settingsForm.Activate();
+            DashboardActivated?.Invoke();
         }
 
         private void ExitApplication()
         {
+            _statsService.StatsUpdated -= OnStatsUpdated;
             _keyboardHook.Stop();
             _keyboardHook.Dispose();
 
