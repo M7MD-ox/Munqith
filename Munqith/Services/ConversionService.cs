@@ -78,7 +78,7 @@ namespace Munqith.Services
                     ConvertedText = converted,
                     WasConverted = true,
                     CharacterCount = converted.Length,
-                    WordCount = converted.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length,
+                    WordCount = converted.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length,
                     DetectedAsArabic = !_layoutConverter.IsEnglishText(text)
                 };
                 _statsService.RecordConversion(result);
@@ -94,7 +94,7 @@ namespace Munqith.Services
                     {
                         if (pastedConvertedText)
                         {
-                            await Task.Delay(50);
+                            await Task.Delay(250);
                         }
                         _clipboard.SetText(previousClipboardText, maxRetries: 3, delayMs: 5);
                     }

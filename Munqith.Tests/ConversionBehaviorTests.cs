@@ -89,6 +89,62 @@ namespace Munqith.Tests
             Assert.Equal(expected, _smartDetector.SmartConvert(input));
         }
 
+        [Theory]
+        [InlineData("’غ ىشةث هس ’خاشةثي", "My name is Mohamed")]
+        [InlineData("[معففثق", "Flutter")]
+        [InlineData("]خؤنثق", "Docker")]
+        [InlineData("/هىعء", "Linux")]
+        [InlineData("÷ مخرث ؛غفاخى", "I love Python")]
+        [InlineData("{ٍ}خيث", "VSCode")]
+        public void test_arabic_to_english_with_shifted_symbols_converts_accurately(string input, string expected)
+        {
+            Assert.Equal(expected, _smartDetector.SmartConvert(input));
+        }
+
+        [Theory]
+        [InlineData("مهلاف", "light")]
+        [InlineData("ىهلاف", "night")]
+        [InlineData("قهلاف", "right")]
+        [InlineData("اهلا", "high")]
+        [InlineData("لاقهلاف", "bright")]
+        [InlineData("فاخعلاف", "thought")]
+        [InlineData("ثىخعلا", "enough")]
+        [InlineData("مشعلا", "laugh")]
+        [InlineData("لاخسف", "ghost")]
+        [InlineData("لهفاعلا", "github")]
+        [InlineData("لاخخن", "book")]
+        [InlineData("لاثففثق", "better")]
+        [InlineData("يخعلاف", "doubt")]
+        public void test_arabic_to_english_disambiguates_lam_alef_between_b_and_gh(string input, string expected)
+        {
+            Assert.Equal(expected, _smartDetector.SmartConvert(input));
+        }
+
+        [Theory]
+        [InlineData("H[]", "أجد")]
+        [InlineData("G[]", "لأجد")]
+        [InlineData("H,", "أو")]
+        public void test_single_hamza_with_lowercase_punctuation_is_not_treated_as_caps_lock(string input, string expected)
+        {
+            Assert.Equal(expected, _smartDetector.SmartConvert(input));
+        }
+
+        [Theory]
+        [InlineData("hkh fajyg ugn \"windows\" , github:", "انا بشتغل على \"windows\" و github:")]
+        [InlineData("i`h url , ram , git", "هذا عقم و قشة و لهف")]
+        public void test_smart_detector_strips_outer_quotes_colons_and_converts_colliding_short_words(string input, string expected)
+        {
+            Assert.Equal(expected, _smartDetector.SmartConvert(input));
+        }
+
+        [Theory]
+        [InlineData("هذا [123] / {foo}", "i`h [123] / {foo}", false)]
+        [InlineData("÷ مخرث [123]", "I love [123]", false)]
+        public void test_arabic_to_english_preserves_ascii_punctuation_outside_arabic_tokens(string input, string expected, bool toArabic)
+        {
+            Assert.Equal(expected, _converter.Convert(input, toArabic));
+        }
+
         [Fact]
         public void test_concurrent_settings_saves_and_stats_recording_preserve_all_increments_without_corruption()
         {

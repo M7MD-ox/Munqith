@@ -15,8 +15,8 @@ namespace Munqith.Core
         /// </summary>
         private static readonly HashSet<string> CommonEnglishWords = new(StringComparer.OrdinalIgnoreCase)
         {
-            // Tech & Brands (3+ chars, unambiguous)
-            "app", "web", "api", "url", "usb", "pdf", "ram", "cpu", "gpu", "sql", "css", "xml", "git",
+            // Tech & Brands (3+ chars, unambiguous; omit words that collide with common Arabic words like url=عقم, ram=قشة, api=شحى, app=شحح, git=لهف, gpu=لحة, usb=عسلا)
+            "web", "pdf", "cpu", "sql", "css", "xml",
             "html", "json", "http", "https", "wifi", "code", "data", "user", "file", "menu", "icon",
             "copy", "paste", "click", "login", "logout", "email", "phone", "video", "audio", "image",
             "pixel", "mouse", "screen", "window", "button", "folder", "memory", "system", "server",
@@ -30,7 +30,7 @@ namespace Munqith.Core
             // Common unambiguous 4+ letter English words
             "that", "with", "have", "this", "will", "your", "from", "they", "know", "want", "been",
             "good", "much", "some", "time", "very", "when", "come", "here", "just", "like", "long",
-            "make", "many", "more", "only", "over", "such", "take", "than", "them", "well", "were",
+            "make", "many", "more", "only", "over", "such", "take", "them", "well", "were",
             "what", "about", "after", "again", "below", "could", "every", "first", "found", "great",
             "house", "large", "learn", "never", "other", "place", "plant", "point", "right", "small",
             "sound", "spell", "still", "study", "their", "there", "these", "thing", "think", "three",
@@ -51,11 +51,7 @@ namespace Munqith.Core
             // Determine overall conversion direction at the sentence level so standalone tokens
             // like ',' ('و') or '[]' ('جد') always convert consistently with the sentence.
             bool toArabic = _layoutConverter.IsEnglishText(text);
-
-            if (toArabic)
-            {
-                text = LayoutConverter.NormalizeCapsLockText(text);
-            }
+            bool isSentenceCapsLock = toArabic && LayoutConverter.IsCapsLockText(text);
 
             var parts = Regex.Split(text, @"(\s+)");
             var result = new StringBuilder(text.Length);
@@ -80,26 +76,15 @@ namespace Munqith.Core
                     continue;
                 }
 
-                string token = part;
-                if (toArabic)
-                {
-                    int tokUpper = 0, tokLower = 0;
-                    foreach (char c in token)
-                    {
-                        if (c >= 'A' && c <= 'Z') tokUpper++;
-                        else if (c >= 'a' && c <= 'z') tokLower++;
-                    }
-                    if (tokUpper > 1 && tokLower == 0)
-                    {
-                        token = token.ToLowerInvariant();
-                    }
-                }
+                string token = (isSentenceCapsLock || (toArabic && LayoutConverter.IsCapsLockText(part)))
+                    ? part.ToLowerInvariant()
+                    : part;
 
                 // Only strip non-Arabic-mapped outer symbols like parentheses or quotes when checking English words.
                 // NEVER strip ',', '.', ';', '\'', '[', ']', '`', '/' because those keys ARE Arabic letters (و, ز, ك, ط, ج, د, ذ, ظ)!
-                string cleaned = token.Trim('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+');
+                string cleaned = token.Trim('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '"', ':');
 
-                if (toArabic && IsLikelyEnglishWord(cleaned))
+                if (toArabic && !isSentenceCapsLock && IsLikelyEnglishWord(cleaned))
                 {
                     preservedEnglishTokens++;
                     result.Append(part);
@@ -114,7 +99,7 @@ namespace Munqith.Core
             // a single word like "hello" and pressed Alt+Q to convert it), perform the direct conversion.
             if (nonWhitespaceTokens > 0 && preservedEnglishTokens == nonWhitespaceTokens)
             {
-                return _layoutConverter.Convert(text, toArabic);
+                return _layoutConverter.Convert(isSentenceCapsLock ? text.ToLowerInvariant() : text, toArabic);
             }
 
             return result.ToString();

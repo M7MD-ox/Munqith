@@ -29,7 +29,23 @@ namespace Munqith.Services
                 NativeMethods.VK_Q
             };
 
-            SendKeyBatch(keysToRelease, keyUp: true);
+            // Emit a Ctrl tap before releasing Alt so Windows suppresses SC_KEYMENU menu-bar focus activation.
+            var inputs = new NativeMethods.INPUT[keysToRelease.Length + 1];
+            inputs[0] = CreateKeyInput(NativeMethods.VK_CONTROL, keyUp: false);
+            for (int i = 0; i < keysToRelease.Length; i++)
+            {
+                inputs[i + 1] = CreateKeyInput(keysToRelease[i], keyUp: true);
+            }
+
+            uint sent = NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<NativeMethods.INPUT>());
+            if (sent == 0)
+            {
+                NativeMethods.keybd_event((byte)NativeMethods.VK_CONTROL, 0, 0, UIntPtr.Zero);
+                foreach (var vk in keysToRelease)
+                {
+                    NativeMethods.keybd_event((byte)vk, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+                }
+            }
         }
 
         public async Task<string?> TryCopyCurrentSelection()

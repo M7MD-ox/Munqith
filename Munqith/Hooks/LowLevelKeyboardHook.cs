@@ -65,6 +65,12 @@ namespace Munqith.Hooks
             int message = (int)wParam;
             if (nCode >= 0 && (message == NativeMethods.WM_KEYDOWN || message == NativeMethods.WM_SYSKEYDOWN))
             {
+                int flags = Marshal.ReadInt32(lParam, 8);
+                if ((flags & NativeMethods.LLKHF_INJECTED) != 0)
+                {
+                    return NativeMethods.CallNextHookEx(_hookID, nCode, wParam, lParam);
+                }
+
                 int vkCode = Marshal.ReadInt32(lParam);
                 Keys key = (Keys)vkCode;
 

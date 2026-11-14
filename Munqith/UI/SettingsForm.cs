@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Components.WebView.WindowsForms;
+using Microsoft.Extensions.DependencyInjection;
+using Munqith.Services;
 
 namespace Munqith.UI
 {
@@ -10,12 +12,15 @@ namespace Munqith.UI
 
         public SettingsForm(IServiceProvider serviceProvider)
         {
+            var settingsService = serviceProvider.GetService<ISettingsService>();
             this.Text = "مُنقِذ Munqith";
             this.ClientSize = new Size(780, 740);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
-            this.BackColor = Color.FromArgb(253, 248, 243);
+            this.BackColor = (settingsService?.Settings.DarkMode == true)
+                ? Color.FromArgb(26, 25, 23)
+                : Color.FromArgb(253, 248, 243);
 
             try
             {

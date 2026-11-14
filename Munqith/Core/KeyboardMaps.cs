@@ -28,6 +28,17 @@ namespace Munqith.Core
             '?'  // ؟
         };
 
+        /// <summary>
+        /// Non-Arabic Unicode symbols produced exclusively by Shift+Letter on the Windows Arabic 101 layout.
+        /// </summary>
+        public static readonly HashSet<char> ArabicShiftedSymbols = new()
+        {
+            '\u2018', // ‘ (Shift+U)
+            '\u2019', // ’ (Shift+M)
+            '\u00F7', // ÷ (Shift+I)
+            '\u00D7'  // × (Shift+O)
+        };
+
         static KeyboardMaps()
         {
             // === Windows Arabic PC Layout (EN -> AR) ===
@@ -103,25 +114,82 @@ namespace Munqith.Core
 
                 // Special characters (shifted)
                 { '~', '\u0651' }, // ّ shadda
-                { '<', ',' },
-                { '>', '.' },
                 { '?', '\u061F' }, // ؟ Arabic question mark
-                { '{', '<' },
-                { '}', '>' },
             };
 
             EnglishToWindowsArabic = new ReadOnlyDictionary<char, char>(enToArWin);
 
-            // Build reverse map (AR -> EN), prioritizing unshifted primary letters
-            var winArToEn = new Dictionary<char, char>();
-            foreach (var kvp in enToArWin)
+            // Explicit reverse map (AR -> EN) preserving unshifted Arabic letters AND shifted Windows Arabic 101 outputs
+            var winArToEn = new Dictionary<char, char>
             {
-                // Only map Arabic characters and shifted symbols that don't collide with ASCII punctuation
-                if (!winArToEn.ContainsKey(kvp.Value))
-                {
-                    winArToEn[kvp.Value] = kvp.Key;
-                }
-            }
+                // Primary Arabic letters (QWERTY row)
+                { '\u0636', 'q' }, // ض
+                { '\u0635', 'w' }, // ص
+                { '\u062B', 'e' }, // ث
+                { '\u0642', 'r' }, // ق
+                { '\u0641', 't' }, // ف
+                { '\u063A', 'y' }, // غ
+                { '\u0639', 'u' }, // ع
+                { '\u0647', 'i' }, // ه
+                { '\u062E', 'o' }, // خ
+                { '\u062D', 'p' }, // ح
+                { '\u062C', '[' }, // ج
+                { '\u062F', ']' }, // د
+
+                // Primary Arabic letters (ASDF row)
+                { '\u0634', 'a' }, // ش
+                { '\u0633', 's' }, // س
+                { '\u064A', 'd' }, // ي
+                { '\u0628', 'f' }, // ب
+                { '\u0644', 'g' }, // ل
+                { '\u0627', 'h' }, // ا
+                { '\u062A', 'j' }, // ت
+                { '\u0646', 'k' }, // ن
+                { '\u0645', 'l' }, // م
+                { '\u0643', ';' }, // ك
+                { '\u0637', '\'' }, // ط
+
+                // Primary Arabic letters (ZXCV row + backtick)
+                { '\u0626', 'z' }, // ئ
+                { '\u0621', 'x' }, // ء
+                { '\u0624', 'c' }, // ؤ
+                { '\u0631', 'v' }, // ر
+                { '\u0649', 'n' }, // ى
+                { '\u0629', 'm' }, // ة
+                { '\u0648', ',' }, // و
+                { '\u0632', '.' }, // ز
+                { '\u0638', '/' }, // ظ
+                { '\u0630', '`' }, // ذ
+
+                // Hamza forms & Arabic punctuation
+                { '\u0623', 'H' }, // أ
+                { '\u0625', 'Y' }, // إ
+                { '\u0622', 'N' }, // آ
+                { '\u0651', '~' }, // ّ shadda
+                { '\u061F', '?' }, // ؟ Arabic question mark
+
+                // Shifted Windows Arabic 101 diacritics & symbols (for AR -> EN when English was typed with Shift/Caps)
+                { '\u064E', 'Q' }, // َ fatha
+                { '\u064B', 'W' }, // ً tanween fatha
+                { '\u064F', 'E' }, // ُ damma
+                { '\u064C', 'R' }, // ٌ tanween damma
+                { '\u2018', 'U' }, // ‘
+                { '\u00F7', 'I' }, // ÷
+                { '\u00D7', 'O' }, // ×
+                { '\u061B', 'P' }, // ؛
+                { '\u0650', 'A' }, // ِ kasra
+                { '\u064D', 'S' }, // ٍ tanween kasra
+                { ']', 'D' },
+                { '[', 'F' },
+                { '\u0640', 'J' }, // ـ tatweel
+                { '\u060C', 'K' }, // ،
+                { '/', 'L' },
+                { '~', 'Z' },
+                { '\u0652', 'X' }, // ْ sukun
+                { '}', 'C' },
+                { '{', 'V' },
+                { '\u2019', 'M' }, // ’
+            };
             WindowsArabicToEnglish = new ReadOnlyDictionary<char, char>(winArToEn);
 
             // Multi-character ligatures (لا, لإ, لأ, لآ)
