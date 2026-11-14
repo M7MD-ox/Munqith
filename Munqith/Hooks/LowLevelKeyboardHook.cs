@@ -10,6 +10,8 @@ namespace Munqith.Hooks
         private readonly NativeMethods.HookProc _proc;
         private IntPtr _hookID = IntPtr.Zero;
 
+        public bool IsPaused { get; set; } = false;
+
         public event Action<HotkeyBinding>? HotkeyTriggered;
 
         private readonly List<HotkeyBinding> _bindings = new();
@@ -62,6 +64,11 @@ namespace Munqith.Hooks
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
+            if (IsPaused)
+            {
+                return NativeMethods.CallNextHookEx(_hookID, nCode, wParam, lParam);
+            }
+
             int message = (int)wParam;
             if (nCode >= 0 && (message == NativeMethods.WM_KEYDOWN || message == NativeMethods.WM_SYSKEYDOWN))
             {

@@ -529,6 +529,68 @@ body {
     background-color: var(--terracotta-light);
 }
 
+.recorder-box.is-recording {
+    border-color: var(--terracotta);
+    border-style: solid;
+    background-color: var(--terracotta-light);
+    box-shadow: 0 0 0 3px var(--terracotta-light);
+}
+
+.hotkey-delete-btn {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.hotkey-delete-btn:hover {
+    border-color: #DC2626;
+    color: #DC2626;
+    background-color: rgba(220, 38, 38, 0.08);
+}
+
+.chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.chip-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-hover);
+    color: var(--text-primary);
+    padding: 5px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.chip-remove {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0 2px;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.chip-remove:hover {
+    color: #DC2626;
+}
+
 .recorder-box.listening {
     border-color: var(--terracotta);
     background-color: #FEF3C7;

@@ -146,6 +146,14 @@ namespace Munqith.Tests
         }
 
         [Fact]
+        public void test_smart_detector_preserves_custom_dictionary_words()
+        {
+            var customWords = new[] { "Munqith", "Figma" };
+            string result = _smartDetector.SmartConvert("hkh fajyg ugn Munqith , Figma", customWords);
+            Assert.Equal("انا بشتغل على Munqith و Figma", result);
+        }
+
+        [Fact]
         public void test_concurrent_settings_saves_and_stats_recording_preserve_all_increments_without_corruption()
         {
             string tempDir = Path.Combine(Path.GetTempPath(), "MunqithTest_" + Guid.NewGuid().ToString("N"));

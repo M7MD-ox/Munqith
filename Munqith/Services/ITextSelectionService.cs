@@ -5,6 +5,6 @@ namespace Munqith.Services
         void ReleaseModifiers();
         Task<string?> TryCopyCurrentSelection();
         Task SimulatePaste();
-        Task<string?> GetTextForConversion();
+        Task<string?> GetTextForConversion(bool autoSelectLastWord = false);
     }
 }

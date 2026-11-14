@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Munqith.Core;
 using Munqith.Interop;
 using Munqith.Models;
@@ -12,6 +13,8 @@ namespace Munqith.Services
         private readonly ISmartDetector _smartDetector;
         private readonly ITextSelectionService _textSelectionService;
         private readonly INativeClipboard _clipboard;
+
+        public event Action<ConversionResult>? ConversionCompleted;
 
         // Anti-reentrancy debounce lock
         private static bool _isConverting = false;
@@ -48,17 +51,22 @@ namespace Munqith.Services
             {
                 var settings = _settingsService.Settings;
 
+                if (IsForegroundAppExcluded(settings.ExcludedApps))
+                {
+                    return;
+                }
+
                 // 1. Backup existing text on clipboard so user doesn't lose copied data if nothing is selected
                 previousClipboardText = _clipboard.GetText(maxRetries: 2, delayMs: 4);
 
-                // 2. Capture highlighted text
-                string? text = await _textSelectionService.GetTextForConversion();
+                // 2. Capture highlighted text (or fall back to the last word before caret if enabled)
+                string? text = await _textSelectionService.GetTextForConversion(settings.AutoConvertLastWord);
 
                 if (string.IsNullOrWhiteSpace(text)) return;
 
                 // 3. Convert text bidirectionally (English -> Arabic OR Arabic -> English)
                 string converted = settings.SmartDetectionEnabled
-                    ? _smartDetector.SmartConvert(text)
+                    ? _smartDetector.SmartConvert(text, settings.CustomPreservedWords)
                     : _layoutConverter.Convert(text);
 
                 // If conversion produces no change, ignore
@@ -82,6 +90,7 @@ namespace Munqith.Services
                     DetectedAsArabic = !_layoutConverter.IsEnglishText(text)
                 };
                 _statsService.RecordConversion(result);
+                ConversionCompleted?.Invoke(result);
             }
             catch { }
             finally
@@ -106,6 +115,40 @@ namespace Munqith.Services
                     _isConverting = false;
                 }
             }
+        }
+
+        private static bool IsForegroundAppExcluded(IReadOnlyCollection<string>? excludedApps)
+        {
+            if (excludedApps == null || excludedApps.Count == 0) return false;
+
+            try
+            {
+                IntPtr hwnd = NativeMethods.GetForegroundWindow();
+                if (hwnd == IntPtr.Zero) return false;
+
+                NativeMethods.GetWindowThreadProcessId(hwnd, out uint pid);
+                if (pid == 0) return false;
+
+                using var proc = Process.GetProcessById((int)pid);
+                string procName = proc.ProcessName;
+                foreach (var item in excludedApps)
+                {
+                    string normalized = item.Trim();
+                    if (normalized.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        normalized = normalized[..^4];
+                    }
+
+                    if (!string.IsNullOrEmpty(normalized) &&
+                        string.Equals(procName, normalized, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch { }
+
+            return false;
         }
     }
 }

@@ -44,9 +44,13 @@ namespace Munqith.Core
             _layoutConverter = layoutConverter ?? LayoutConverter.Instance;
         }
 
-        public string SmartConvert(string text)
+        public string SmartConvert(string text, IReadOnlyCollection<string>? customPreservedWords = null)
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
+
+            HashSet<string>? customSet = (customPreservedWords != null && customPreservedWords.Count > 0)
+                ? new HashSet<string>(customPreservedWords, StringComparer.OrdinalIgnoreCase)
+                : null;
 
             // Determine overall conversion direction at the sentence level so standalone tokens
             // like ',' ('و') or '[]' ('جد') always convert consistently with the sentence.
@@ -84,7 +88,10 @@ namespace Munqith.Core
                 // NEVER strip ',', '.', ';', '\'', '[', ']', '`', '/' because those keys ARE Arabic letters (و, ز, ك, ط, ج, د, ذ, ظ)!
                 string cleaned = token.Trim('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '"', ':');
 
-                if (toArabic && !isSentenceCapsLock && IsLikelyEnglishWord(cleaned))
+                bool shouldPreserve = toArabic && !isSentenceCapsLock &&
+                    (IsLikelyEnglishWord(cleaned) || (customSet != null && !string.IsNullOrEmpty(cleaned) && customSet.Contains(cleaned)));
+
+                if (shouldPreserve)
                 {
                     preservedEnglishTokens++;
                     result.Append(part);

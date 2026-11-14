@@ -22,6 +22,12 @@ namespace Munqith.Interop
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
 
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
         [DllImport("user32.dll", SetLastError = true)]
         public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
@@ -59,6 +65,7 @@ namespace Munqith.Interop
         public const ushort VK_SHIFT = 0x10;
         public const ushort VK_CONTROL = 0x11;
         public const ushort VK_MENU = 0x12; // Alt
+        public const ushort VK_LEFT = 0x25;
         public const ushort VK_F10 = 0x79;
         public const ushort VK_LSHIFT = 0xA0;
         public const ushort VK_RSHIFT = 0xA1;
@@ -71,6 +78,7 @@ namespace Munqith.Interop
         public const ushort VK_V = 0x56;
 
         public const int INPUT_KEYBOARD = 1;
+        public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
         public const uint KEYEVENTF_KEYUP = 0x0002;
 
         public const uint CF_UNICODETEXT = 13;

@@ -6,9 +6,13 @@ namespace Munqith.Models
     public class AppSettings
     {
         public bool SmartDetectionEnabled { get; set; } = true; // Enabled by default as requested!
+        public bool AutoConvertLastWord { get; set; } = true;
+        public bool ShowConversionToast { get; set; } = true;
         public bool StartWithWindows { get; set; } = true;
         public bool DarkMode { get; set; } = false;
         public string Language { get; set; } = "ar";
+        public List<string> ExcludedApps { get; set; } = new();
+        public List<string> CustomPreservedWords { get; set; } = new();
 
         public List<HotkeyBinding> Hotkeys { get; set; } = new()
         {

@@ -76,12 +76,47 @@ namespace Munqith.Services
         }
 
         /// <summary>
-        /// Only converts text explicitly highlighted by the user.
-        /// Does not perform destructive line or word auto-selection fallbacks.
+        /// Captures highlighted text; when autoSelectLastWord is enabled and nothing is selected,
+        /// selects the word immediately before the caret via Ctrl+Shift+Left and copies it.
         /// </summary>
-        public async Task<string?> GetTextForConversion()
+        public async Task<string?> GetTextForConversion(bool autoSelectLastWord = false)
         {
+            string? selected = await TryCopyCurrentSelection();
+            if (!string.IsNullOrEmpty(selected) || !autoSelectLastWord)
+            {
+                return selected;
+            }
+
+            // Select the previous word without stealing focus, then copy it.
+            ReleaseModifiers();
+            await Task.Delay(KeyPressDelayMs);
+            SendCtrlShiftLeft();
+            await Task.Delay(KeyPressDelayMs);
             return await TryCopyCurrentSelection();
+        }
+
+        private static void SendCtrlShiftLeft()
+        {
+            var inputs = new NativeMethods.INPUT[]
+            {
+                CreateKeyInput(NativeMethods.VK_CONTROL, keyUp: false),
+                CreateKeyInput(NativeMethods.VK_SHIFT, keyUp: false),
+                CreateKeyInput(NativeMethods.VK_LEFT, keyUp: false, isExtended: true),
+                CreateKeyInput(NativeMethods.VK_LEFT, keyUp: true, isExtended: true),
+                CreateKeyInput(NativeMethods.VK_SHIFT, keyUp: true),
+                CreateKeyInput(NativeMethods.VK_CONTROL, keyUp: true)
+            };
+
+            uint sent = NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<NativeMethods.INPUT>());
+            if (sent == 0)
+            {
+                NativeMethods.keybd_event((byte)NativeMethods.VK_CONTROL, 0, 0, UIntPtr.Zero);
+                NativeMethods.keybd_event((byte)NativeMethods.VK_SHIFT, 0, 0, UIntPtr.Zero);
+                NativeMethods.keybd_event((byte)NativeMethods.VK_LEFT, 0, NativeMethods.KEYEVENTF_EXTENDEDKEY, UIntPtr.Zero);
+                NativeMethods.keybd_event((byte)NativeMethods.VK_LEFT, 0, NativeMethods.KEYEVENTF_EXTENDEDKEY | NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+                NativeMethods.keybd_event((byte)NativeMethods.VK_SHIFT, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+                NativeMethods.keybd_event((byte)NativeMethods.VK_CONTROL, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            }
         }
 
         private static async Task WaitForPhysicalAltReleaseAsync(int maxWaitMs)
@@ -142,8 +177,11 @@ namespace Munqith.Services
             }
         }
 
-        private static NativeMethods.INPUT CreateKeyInput(ushort vk, bool keyUp)
+        private static NativeMethods.INPUT CreateKeyInput(ushort vk, bool keyUp, bool isExtended = false)
         {
+            uint flags = keyUp ? NativeMethods.KEYEVENTF_KEYUP : 0;
+            if (isExtended) flags |= NativeMethods.KEYEVENTF_EXTENDEDKEY;
+
             return new NativeMethods.INPUT
             {
                 type = NativeMethods.INPUT_KEYBOARD,
@@ -153,7 +191,7 @@ namespace Munqith.Services
                     {
                         wVk = vk,
                         wScan = 0,
-                        dwFlags = keyUp ? NativeMethods.KEYEVENTF_KEYUP : 0,
+                        dwFlags = flags,
                         time = 0,
                         dwExtraInfo = UIntPtr.Zero
                     }

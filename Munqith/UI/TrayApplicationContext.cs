@@ -16,6 +16,7 @@ namespace Munqith.UI
         private readonly SynchronizationContext? _uiSyncContext;
         private SettingsForm? _settingsForm;
         private ToolStripMenuItem? _statsMenuItem;
+        private ConversionToastForm? _activeToast;
 
         public event Action? DashboardActivated;
 
@@ -38,6 +39,7 @@ namespace Munqith.UI
             RegisterConfiguredHotkeys();
 
             _statsService.StatsUpdated += OnStatsUpdated;
+            _conversionService.ConversionCompleted += OnConversionCompleted;
             _keyboardHook.HotkeyTriggered += OnHotkeyTriggered;
             _keyboardHook.Start();
         }
@@ -159,6 +161,46 @@ namespace Munqith.UI
             _keyboardHook.UpdateBindings(_settingsService.Settings.Hotkeys);
         }
 
+        public void SetHotkeyCapturePaused(bool paused)
+        {
+            _keyboardHook.IsPaused = paused;
+        }
+
+        private void OnConversionCompleted(ConversionResult result)
+        {
+            if (!result.WasConverted || !_settingsService.Settings.ShowConversionToast)
+            {
+                return;
+            }
+
+            if (_uiSyncContext != null)
+            {
+                _uiSyncContext.Post(_ => ShowConversionToast(result.ConvertedText), null);
+            }
+            else
+            {
+                ShowConversionToast(result.ConvertedText);
+            }
+        }
+
+        private void ShowConversionToast(string convertedText)
+        {
+            try
+            {
+                if (_activeToast != null && !_activeToast.IsDisposed)
+                {
+                    _activeToast.Close();
+                    _activeToast.Dispose();
+                }
+
+                bool isDark = _settingsService.Settings.DarkMode;
+                bool isAr = _settingsService.Settings.Language == "ar";
+                _activeToast = new ConversionToastForm(convertedText, isDark, isAr);
+                _activeToast.Show();
+            }
+            catch { }
+        }
+
         private async void OnHotkeyTriggered(HotkeyBinding binding)
         {
             try
@@ -185,6 +227,12 @@ namespace Munqith.UI
         private void ExitApplication()
         {
             _statsService.StatsUpdated -= OnStatsUpdated;
+            _conversionService.ConversionCompleted -= OnConversionCompleted;
+            if (_activeToast != null && !_activeToast.IsDisposed)
+            {
+                _activeToast.Close();
+                _activeToast.Dispose();
+            }
             _keyboardHook.Stop();
             _keyboardHook.Dispose();
 

@@ -198,6 +198,93 @@
                 </label>
             </div>
 
+            <!-- Auto-Convert Last Word Setting -->
+            <div class="claude-card setting-row">
+                <div class="setting-texts">
+                    <div class="setting-title">
+                        <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                        </svg>
+                        @(IsArabic ? "تحويل آخر كلمة تلقائياً بدون تحديد" : "Auto-Convert Last Word Without Selection")
+                    </div>
+                    <p class="setting-desc">@(IsArabic ? "عند نسيان تحديد النص بالماوس، يتم تحديد وتحويل آخر كلمة قبل المؤشر تلقائياً" : "Automatically selects and converts the word before the cursor when nothing is highlighted")</p>
+                </div>
+                <label class="claude-toggle">
+                    <input type="checkbox" @bind="Settings.AutoConvertLastWord" @bind:after="OnSettingChanged" />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- Show Conversion Toast Setting -->
+            <div class="claude-card setting-row">
+                <div class="setting-texts">
+                    <div class="setting-title">
+                        <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        @(IsArabic ? "إظهار رسالة التحويل المنبثقة (Toast)" : "Show Conversion Toast Notification")
+                    </div>
+                    <p class="setting-desc">@(IsArabic ? "إظهار أو إخفاء الإشعار الخفيف في زاوية الشاشة بعد كل عملية تحويل" : "Show or hide the lightweight corner notification after each conversion")</p>
+                </div>
+                <label class="claude-toggle">
+                    <input type="checkbox" @bind="Settings.ShowConversionToast" @bind:after="OnSettingChanged" />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- App Exclusions & Custom Dictionary -->
+            <div class="claude-card">
+                <div class="setting-title" style="margin-bottom: 6px;">
+                    <svg class="svg-icon" style="color: var(--terracotta);" viewBox="0 0 24 24">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    @(IsArabic ? "استثناءات البرامج والكلمات الخاصة" : "App Exclusions & Custom Dictionary")
+                </div>
+                <p class="setting-desc" style="margin-bottom: 12px;">
+                    @(IsArabic ? "برامج لا يعمل بداخلها الاختصار (مثل cmd أو powershell) وكلمات خاصة تبقى كما هي وسط العربي:" : "Apps where hotkeys are ignored (e.g., cmd, powershell) and custom words preserved inside Arabic text:")
+                </p>
+
+                <div style="margin-bottom: 14px;">
+                    <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">@(IsArabic ? "البرامج المستثناة (اسم العملية):" : "Excluded Apps (Process Name):")</div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="claude-input" style="flex: 1;" @bind="NewExcludedApp" @bind:event="oninput" placeholder="cmd, powershell, wt..." />
+                        <button type="button" class="claude-btn-secondary" @onclick="AddExcludedApp">@(IsArabic ? "إضافة" : "Add")</button>
+                    </div>
+                    @if (Settings.ExcludedApps.Count > 0)
+                    {
+                        <div class="chip-list">
+                            @foreach (var app in Settings.ExcludedApps)
+                            {
+                                <span class="chip-tag">
+                                    @app
+                                    <button type="button" class="chip-remove" @onclick="() => RemoveExcludedApp(app)">×</button>
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div>
+                    <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">@(IsArabic ? "كلمات خاصة لا تُحوَّل (القاموس الشخصي):" : "Custom Preserved Words:")</div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="claude-input" style="flex: 1;" @bind="NewCustomWord" @bind:event="oninput" placeholder="Munqith, Figma, API_Key..." />
+                        <button type="button" class="claude-btn-secondary" @onclick="AddCustomWord">@(IsArabic ? "إضافة" : "Add")</button>
+                    </div>
+                    @if (Settings.CustomPreservedWords.Count > 0)
+                    {
+                        <div class="chip-list">
+                            @foreach (var word in Settings.CustomPreservedWords)
+                            {
+                                <span class="chip-tag">
+                                    @word
+                                    <button type="button" class="chip-remove" @onclick="() => RemoveCustomWord(word)">×</button>
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
             <!-- Start With Windows Setting -->
             <div class="claude-card setting-row">
                 <div class="setting-texts">
@@ -256,9 +343,11 @@
                         <div>
                             <span class="hotkey-badge">@hk.DisplayName</span>
                             <span style="font-size: 13px; color: var(--text-secondary); margin-inline-start: 12px;">
-                                @(hk.DisplayName.Contains("Alt") 
-                                    ? (IsArabic ? "التحويل الأساسي السريع" : "Primary Instant Conversion") 
-                                    : (IsArabic ? "التحويل الثانوي الاحتياطي" : "Secondary Fallback Conversion"))
+                                @(hk.DisplayName.Contains("Alt+Q")
+                                    ? (IsArabic ? "التحويل الأساسي السريع" : "Primary Instant Conversion")
+                                    : hk.DisplayName.Contains("Ctrl+Q")
+                                        ? (IsArabic ? "التحويل الثانوي الاحتياطي" : "Secondary Fallback Conversion")
+                                        : (IsArabic ? "اختصار مخصص" : "Custom Shortcut"))
                             </span>
                         </div>
                         
@@ -270,8 +359,49 @@
                                 <input type="checkbox" @bind="hk.IsEnabled" @bind:after="OnHotkeysChanged" />
                                 <span class="toggle-slider"></span>
                             </label>
+                            @if (Settings.Hotkeys.Count > 1)
+                            {
+                                <button type="button" class="hotkey-delete-btn" title="@(IsArabic ? "حذف الاختصار" : "Remove hotkey")" @onclick="() => RemoveHotkey(hk)">×</button>
+                            }
                         </div>
                     </div>
+                }
+            </div>
+
+            <!-- Custom Hotkey Recorder -->
+            <div class="claude-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-wrap: wrap;">
+                    <div>
+                        <div class="setting-title">@(IsArabic ? "إضافة اختصار مخصص جديد" : "Add Custom Shortcut")</div>
+                        <p class="setting-desc">@(IsArabic ? "اضغط داخل المربع ثم اضغط تركيبة المفاتيح المطلوبة (مثل Alt+W أو Ctrl+Shift+Z)" : "Click inside the box then press any key combination (e.g. Alt+W or Ctrl+Shift+Z)")</p>
+                    </div>
+                    <button type="button" class="claude-btn-secondary" @onclick="ResetDefaultHotkeys">
+                        @(IsArabic ? "استعادة الافتراضي" : "Reset Defaults")
+                    </button>
+                </div>
+
+                <div tabindex="0"
+                     class="recorder-box @(IsRecordingHotkey ? "is-recording" : "")"
+                     @onclick="StartRecordingHotkey"
+                     @onblur="StopRecordingHotkey"
+                     @onkeydown="OnRecorderKeyDown"
+                     @onkeydown:preventDefault="true">
+                    @if (IsRecordingHotkey)
+                    {
+                        <span style="font-weight: 600; color: var(--terracotta-active);">
+                            @(IsArabic ? "🎙️ اضغط الاختصار الجديد الآن (مع Ctrl أو Alt أو Shift)..." : "🎙️ Press your new shortcut now (with Ctrl, Alt, or Shift)...")
+                        </span>
+                    }
+                    else
+                    {
+                        <span style="color: var(--text-secondary); font-size: 14px;">
+                            @(IsArabic ? "⌨️ انقر هنا لتسجيل اختصار كيبورد جديد" : "⌨️ Click here to record a new keyboard shortcut")
+                        </span>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(HotkeyRecorderMessage))
+                {
+                    <p style="font-size: 12.5px; color: var(--terracotta-active); margin: 10px 0 0 0;">@HotkeyRecorderMessage</p>
                 }
             </div>
         }
@@ -335,6 +465,10 @@
     private bool IsArabic;
     private string PlaygroundText = "hgpl]ggi , hga;v ggi";
     private bool ShowSaveToast = false;
+    private string NewExcludedApp = string.Empty;
+    private string NewCustomWord = string.Empty;
+    private bool IsRecordingHotkey = false;
+    private string HotkeyRecorderMessage = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -376,10 +510,12 @@
     {
         StatsService.StatsUpdated -= OnStatsUpdated;
         TrayContext.DashboardActivated -= OnDashboardActivated;
+        TrayContext.SetHotkeyCapturePaused(false);
     }
 
     private void SetTab(int tabIndex)
     {
+        StopRecordingHotkey();
         ActiveTab = tabIndex;
     }
 
@@ -416,12 +552,144 @@
         TrayContext.RegisterConfiguredHotkeys();
     }
 
+    private void AddExcludedApp()
+    {
+        string value = NewExcludedApp.Trim();
+        if (value.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) value = value[..^4];
+        if (!string.IsNullOrEmpty(value) && !Settings.ExcludedApps.Contains(value, StringComparer.OrdinalIgnoreCase))
+        {
+            Settings.ExcludedApps.Add(value);
+            SettingsService.Save();
+        }
+        NewExcludedApp = string.Empty;
+    }
+
+    private void RemoveExcludedApp(string app)
+    {
+        Settings.ExcludedApps.Remove(app);
+        SettingsService.Save();
+    }
+
+    private void AddCustomWord()
+    {
+        string value = NewCustomWord.Trim();
+        if (!string.IsNullOrEmpty(value) && !Settings.CustomPreservedWords.Contains(value, StringComparer.OrdinalIgnoreCase))
+        {
+            Settings.CustomPreservedWords.Add(value);
+            SettingsService.Save();
+        }
+        NewCustomWord = string.Empty;
+    }
+
+    private void RemoveCustomWord(string word)
+    {
+        Settings.CustomPreservedWords.Remove(word);
+        SettingsService.Save();
+    }
+
+    private void RemoveHotkey(HotkeyBinding binding)
+    {
+        if (Settings.Hotkeys.Count <= 1) return;
+        Settings.Hotkeys.Remove(binding);
+        OnHotkeysChanged();
+    }
+
+    private void ResetDefaultHotkeys()
+    {
+        Settings.Hotkeys = new List<HotkeyBinding>
+        {
+            new HotkeyBinding { ModifierKeysValue = 2, KeyValue = 0x51, IsEnabled = true },
+            new HotkeyBinding { ModifierKeysValue = 1, KeyValue = 0x51, IsEnabled = true }
+        };
+        HotkeyRecorderMessage = IsArabic ? "تمت استعادة الاختصارات الافتراضية." : "Default hotkeys restored.";
+        OnHotkeysChanged();
+    }
+
+    private void StartRecordingHotkey()
+    {
+        IsRecordingHotkey = true;
+        HotkeyRecorderMessage = string.Empty;
+        TrayContext.SetHotkeyCapturePaused(true);
+    }
+
+    private void StopRecordingHotkey()
+    {
+        if (IsRecordingHotkey)
+        {
+            IsRecordingHotkey = false;
+            TrayContext.SetHotkeyCapturePaused(false);
+        }
+    }
+
+    private void OnRecorderKeyDown(KeyboardEventArgs e)
+    {
+        if (!IsRecordingHotkey) return;
+
+        if (e.Key is "Control" or "Alt" or "Shift" or "Meta") return;
+
+        int modifiers = 0;
+        if (e.AltKey) modifiers |= 1;
+        if (e.CtrlKey) modifiers |= 2;
+        if (e.ShiftKey) modifiers |= 4;
+
+        if (modifiers == 0)
+        {
+            HotkeyRecorderMessage = IsArabic
+                ? "يجب اختيار مفتاح معدل واحد على الأقل (Ctrl أو Alt أو Shift)."
+                : "Please include at least one modifier key (Ctrl, Alt, or Shift).";
+            return;
+        }
+
+        int vk = MapKeyboardEventToVirtualKey(e);
+        if (vk == 0)
+        {
+            HotkeyRecorderMessage = IsArabic ? "هذا المفتاح غير مدعوم للاختصار." : "This key is not supported as a shortcut.";
+            return;
+        }
+
+        bool exists = Settings.Hotkeys.Any(h => h.ModifierKeysValue == modifiers && h.KeyValue == vk);
+        if (!exists)
+        {
+            var binding = new HotkeyBinding { ModifierKeysValue = modifiers, KeyValue = vk, IsEnabled = true };
+            Settings.Hotkeys.Add(binding);
+            OnHotkeysChanged();
+            HotkeyRecorderMessage = IsArabic
+                ? $"تمت إضافة الاختصار: {binding.DisplayName}"
+                : $"Added shortcut: {binding.DisplayName}";
+        }
+        else
+        {
+            HotkeyRecorderMessage = IsArabic ? "هذا الاختصار مسجل بالفعل." : "This shortcut is already registered.";
+        }
+
+        StopRecordingHotkey();
+    }
+
+    private static int MapKeyboardEventToVirtualKey(KeyboardEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(e.Code))
+        {
+            if (e.Code.StartsWith("Key") && e.Code.Length == 4 && char.IsLetter(e.Code[3]))
+                return char.ToUpperInvariant(e.Code[3]);
+            if (e.Code.StartsWith("Digit") && e.Code.Length == 6 && char.IsDigit(e.Code[5]))
+                return e.Code[5];
+            if (e.Code.StartsWith("F") && int.TryParse(e.Code[1..], out int fn) && fn is >= 1 and <= 12)
+                return 0x70 + (fn - 1);
+            if (e.Code == "Space") return 0x20;
+        }
+
+        if (!string.IsNullOrEmpty(e.Key) && e.Key.Length == 1 && char.IsLetterOrDigit(e.Key[0]))
+            return char.ToUpperInvariant(e.Key[0]);
+
+        return 0;
+    }
+
     private void TestConversion()
     {
         if (!string.IsNullOrEmpty(PlaygroundText))
         {
             PlaygroundText = Settings.SmartDetectionEnabled
-                ? SmartDetector.SmartConvert(PlaygroundText)
+                ? SmartDetector.SmartConvert(PlaygroundText, Settings.CustomPreservedWords)
                 : LayoutConverter.Convert(PlaygroundText);
         }
     }
